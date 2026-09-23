@@ -1,0 +1,7 @@
+<resources>
+    <!-- Tema base da janela; as cores do app vêm do MaterialTheme (Compose). -->
+    <style name="Theme.RotaCerta" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/brand_primary</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>

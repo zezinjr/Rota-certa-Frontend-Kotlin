@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Protótipo: permite HTTP para testar contra o backend Django local (runserver).
+     Em produção, use HTTPS e remova cleartextTrafficPermitted. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
