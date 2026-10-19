@@ -33,6 +33,7 @@ import br.com.rotacerta.colaborador.ui.components.BadgeKind
 import br.com.rotacerta.colaborador.ui.components.ConfirmDialog
 import br.com.rotacerta.colaborador.ui.components.InfoRow
 import br.com.rotacerta.colaborador.ui.components.LoadingState
+import br.com.rotacerta.colaborador.ui.components.MessageState
 import br.com.rotacerta.colaborador.ui.components.Panel
 import br.com.rotacerta.colaborador.ui.components.RcAvatar
 import br.com.rotacerta.colaborador.ui.components.RcButton
@@ -40,9 +41,46 @@ import br.com.rotacerta.colaborador.ui.components.RcStrokedButton
 import br.com.rotacerta.colaborador.ui.theme.RcColors
 
 @Composable
-fun ProfileScreen(profile: EmployeeProfile?, onChangePassword: () -> Unit, onLogout: () -> Unit) {
-    if (profile == null) { LoadingState(); return }
+fun ProfileScreen(
+    profile: EmployeeProfile?,
+    error: String?,
+    onRetry: () -> Unit,
+    onChangePassword: () -> Unit,
+    onLogout: () -> Unit,
+) {
     var confirmLogout by remember { mutableStateOf(false) }
+    if (confirmLogout) {
+        ConfirmDialog(
+            message = "Deseja sair da conta?",
+            description = "Você precisará entrar novamente com e-mail e senha.",
+            confirmLabel = "Sair",
+            onConfirm = onLogout,
+            onCancel = { confirmLogout = false },
+        )
+    }
+    when {
+        profile != null -> ProfileContent(profile, onChangePassword) { confirmLogout = true }
+        // Mesmo sem perfil, o usuário precisa conseguir tentar de novo ou sair.
+        error != null -> Column(
+            Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            MessageState(
+                "Não foi possível carregar o perfil",
+                error,
+                modifier = Modifier.weight(1f, fill = false),
+                actionLabel = "Tentar novamente",
+                onAction = onRetry,
+            )
+            RcButton("Sair da conta", { confirmLogout = true }, Modifier.fillMaxWidth(), icon = Icons.AutoMirrored.Filled.Logout, color = RcColors.MatWarn)
+        }
+        else -> LoadingState()
+    }
+}
+
+@Composable
+private fun ProfileContent(profile: EmployeeProfile, onChangePassword: () -> Unit, onLogoutClick: () -> Unit) {
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -71,16 +109,6 @@ fun ProfileScreen(profile: EmployeeProfile?, onChangePassword: () -> Unit, onLog
             fontSize = 13.sp,
         )
         RcStrokedButton("Alterar senha", onChangePassword, Modifier.fillMaxWidth(), icon = Icons.Filled.Lock)
-        RcButton("Sair da conta", { confirmLogout = true }, Modifier.fillMaxWidth(), icon = Icons.AutoMirrored.Filled.Logout, color = RcColors.MatWarn)
-    }
-
-    if (confirmLogout) {
-        ConfirmDialog(
-            message = "Deseja sair da conta?",
-            description = "Você precisará entrar novamente com e-mail e senha.",
-            confirmLabel = "Sair",
-            onConfirm = onLogout,
-            onCancel = { confirmLogout = false },
-        )
+        RcButton("Sair da conta", onLogoutClick, Modifier.fillMaxWidth(), icon = Icons.AutoMirrored.Filled.Logout, color = RcColors.MatWarn)
     }
 }

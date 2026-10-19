@@ -23,6 +23,7 @@ data class TripUiState(
     val message: String? = null,
     val lastUpdated: LocalTime? = null,
     val profile: EmployeeProfile? = null,
+    val profileError: String? = null,
 ) {
     val selectedTrip: Trip? get() = trips.firstOrNull { it.id == selectedTripId } ?: trips.firstOrNull()
 }
@@ -43,11 +44,12 @@ class TripViewModel(
                 delay(pollIntervalMillis)
             }
         }
-        loadProfile()
     }
 
     fun refresh(silent: Boolean = false) {
         if (!silent) _state.update { it.copy(loading = true, error = null) }
+        // Se o perfil falhou antes (ex.: backend fora do ar), tenta de novo junto com as viagens.
+        if (_state.value.profile == null) loadProfile()
         viewModelScope.launch {
             repository.trips()
                 .onSuccess { trips ->
@@ -60,8 +62,11 @@ class TripViewModel(
     }
 
     fun loadProfile() {
+        _state.update { it.copy(profileError = null) }
         viewModelScope.launch {
-            repository.profile().onSuccess { p -> _state.update { it.copy(profile = p) } }
+            repository.profile()
+                .onSuccess { p -> _state.update { it.copy(profile = p, profileError = null) } }
+                .onFailure { e -> _state.update { it.copy(profileError = e.message ?: "Erro ao carregar o perfil.") } }
         }
     }
 

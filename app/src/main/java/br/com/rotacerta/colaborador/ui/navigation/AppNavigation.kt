@@ -150,6 +150,8 @@ private fun MainFlow(container: AppContainer, actions: PlatformActions, personId
             composable(Tab.PROFILE.route) {
                 ProfileScreen(
                     profile = state.profile,
+                    error = state.profileError,
+                    onRetry = tripViewModel::loadProfile,
                     onChangePassword = { nav.navigate("alterar-senha") },
                     onLogout = tripViewModel::logout,
                 )
