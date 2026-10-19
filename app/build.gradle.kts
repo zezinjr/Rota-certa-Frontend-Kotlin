@@ -17,8 +17,10 @@ android {
         versionName = "0.1.0"
 
         // 10.0.2.2 = localhost da máquina host visto pelo emulador Android.
-        // Em aparelho físico, altere pelo ícone de engrenagem na tela de login.
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/\"")
+        // Em aparelho físico, altere pelo ícone de engrenagem na tela de login
+        // ou gere o APK com -PapiBaseUrl=http://IP-DO-PC:8000/api/
+        val apiBaseUrl = providers.gradleProperty("apiBaseUrl").getOrElse("http://10.0.2.2:8000/api/")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {

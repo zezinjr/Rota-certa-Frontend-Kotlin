@@ -93,6 +93,24 @@ Os endpoints `/api/me/*` exigem Bearer token de uma pessoa do tipo `EMPLOYEE`.
 3. **Usuário de teste** (seed): `mne007@amazonialogistica.com` / `RotaCerta@2026`
    (qualquer `mneXXX@<domínio da empresa>` funciona; o 1º acesso pede nova senha).
 
+## 📦 Baixar o APK pronto (GitHub Actions)
+
+O workflow [`android-apk.yml`](../../.github/workflows/android-apk.yml) gera o APK de debug a cada
+push/PR que altere `mobile/colaborador-android/`.
+
+1. No GitHub, abra **Actions → Android APK** e clique na execução mais recente (verde).
+2. Em **Artifacts**, baixe `rota-certa-colaborador-debug` (um .zip com o `app-debug.apk`).
+3. Copie o APK para o celular e instale (é preciso permitir "instalar apps desconhecidos").
+
+**APK já apontando para o seu servidor:** em **Actions → Android APK → Run workflow**, informe
+`http://IP-DO-PC:8000/api/` no campo *URL da API*. Sem isso, o APK usa `10.0.2.2` (emulador) e
+o endereço pode ser trocado pela engrenagem na tela de login.
+
+Localmente, o mesmo resultado sai com:
+```bash
+./gradlew assembleDebug -PapiBaseUrl=http://192.168.0.10:8000/api/
+```
+
 ## ⚠️ Observações do protótipo
 
 - HTTP liberado (`network_security_config`) só para testar com o `runserver`; em produção use HTTPS.

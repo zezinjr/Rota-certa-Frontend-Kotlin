@@ -18,15 +18,17 @@ class SessionManager(private val store: SessionStore, defaultServerUrl: String) 
     private val _state = MutableStateFlow(restore())
     val state: StateFlow<SessionState> = _state.asStateFlow()
 
-    val defaultServerUrl: String = defaultServerUrl
+    val defaultServerUrl: String = withTrailingSlash(defaultServerUrl)
     val serverUrl: String get() = store.serverUrl ?: defaultServerUrl
     val accessToken: String? get() = store.accessToken
     val refreshToken: String? get() = store.refreshToken
 
     fun updateServerUrl(url: String) {
-        val trimmed = url.trim()
-        store.serverUrl = if (trimmed.endsWith("/")) trimmed else "$trimmed/"
+        store.serverUrl = withTrailingSlash(url)
     }
+
+    // Sem a barra final, "…/api" + "me/trips/" viraria "…/me/trips/" (perdendo o /api).
+    private fun withTrailingSlash(url: String): String = url.trim().let { if (it.endsWith("/")) it else "$it/" }
 
     fun onAuthenticated(auth: AuthResponse) {
         store.accessToken = auth.accessToken
