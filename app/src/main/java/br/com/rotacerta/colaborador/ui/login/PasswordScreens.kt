@@ -1,41 +1,56 @@
 package br.com.rotacerta.colaborador.ui.login
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import br.com.rotacerta.colaborador.ui.theme.SuccessGreen
+import androidx.compose.ui.unit.sp
+import br.com.rotacerta.colaborador.ui.components.FormCard
+import br.com.rotacerta.colaborador.ui.components.FormField
+import br.com.rotacerta.colaborador.ui.components.RcButton
+import br.com.rotacerta.colaborador.ui.components.RcTopBar
+import br.com.rotacerta.colaborador.ui.theme.RcColors
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FormScaffold(title: String, onBack: (() -> Unit)?, content: @Composable () -> Unit) {
+    Column(Modifier.fillMaxSize().background(RcColors.Background)) {
+        RcTopBar(
+            title = title,
+            navigation = onBack?.let {
+                {
+                    IconButton(onClick = it) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = RcColors.White)
+                    }
+                }
+            },
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) { content() }
+    }
+}
+
 @Composable
 fun ChangePasswordScreen(
     viewModel: ChangePasswordViewModel,
@@ -44,135 +59,72 @@ fun ChangePasswordScreen(
     onDone: () -> Unit = {},
 ) {
     LaunchedEffect(viewModel.success) { if (viewModel.success) onDone() }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (forced) "Primeiro acesso" else "Alterar senha") },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar") }
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).imePadding().padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+    FormScaffold(if (forced) "Primeiro acesso" else "Alterar senha", onBack) {
+        FormCard(
+            title = if (forced) "Defina sua senha" else "Alterar senha",
+            subtitle = if (forced) "Por segurança, defina uma nova senha antes de continuar." else null,
         ) {
-            if (forced) {
-                Text(
-                    "Por segurança, defina uma nova senha antes de continuar.",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            PasswordField("Senha atual", viewModel.current) { viewModel.current = it }
-            PasswordField("Nova senha", viewModel.new) { viewModel.new = it }
-            PasswordField("Confirmar nova senha", viewModel.confirm) { viewModel.confirm = it }
+            FormField("Senha atual", viewModel.current, { viewModel.current = it }, password = true)
+            FormField("Nova senha", viewModel.new, { viewModel.new = it }, password = true)
+            FormField("Confirmar nova senha", viewModel.confirm, { viewModel.confirm = it }, password = true)
             Text(
                 "Mínimo de 8 caracteres, evitando senhas comuns ou só com números.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = RcColors.CardText,
+                fontSize = 13.sp,
             )
-            viewModel.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            PrimaryButton("Salvar nova senha", viewModel.loading, viewModel::submit)
+            viewModel.error?.let { Text(it, color = RcColors.MatWarn, fontSize = 14.sp) }
+            RcButton("Salvar", viewModel::submit, loading = viewModel.loading, modifier = Modifier.fillMaxWidth())
             if (forced) {
-                TextButton(onClick = viewModel::logout, modifier = Modifier.fillMaxWidth()) { Text("Sair") }
+                TextButton(onClick = viewModel::logout, modifier = Modifier.fillMaxWidth()) {
+                    Text("Sair", color = RcColors.MatWarn, fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(viewModel: ForgotPasswordViewModel, onBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Recuperar senha") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar") }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).imePadding().padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            when (viewModel.step) {
-                ForgotPasswordViewModel.Step.REQUEST -> {
-                    Text("Informe seu e-mail corporativo para receber um código de verificação.")
-                    OutlinedTextField(
-                        value = viewModel.email,
-                        onValueChange = { viewModel.email = it },
-                        label = { Text("E-mail corporativo") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    viewModel.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    PrimaryButton("Enviar código", viewModel.loading, viewModel::requestCode)
-                }
-                ForgotPasswordViewModel.Step.RESET -> {
-                    viewModel.devCode?.let {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(12.dp)) {
-                            Text(
-                                "Ambiente de testes: seu código é $it",
-                                modifier = Modifier.padding(12.dp),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                    Text("Digite o código recebido e escolha uma nova senha.")
-                    OutlinedTextField(
-                        value = viewModel.code,
-                        onValueChange = { viewModel.code = it.filter(Char::isDigit) },
-                        label = { Text("Código de verificação") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PasswordField("Nova senha", viewModel.newPassword) { viewModel.newPassword = it }
-                    viewModel.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    PrimaryButton("Redefinir senha", viewModel.loading, viewModel::reset)
-                }
-                ForgotPasswordViewModel.Step.DONE -> {
-                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(56.dp))
-                    Text("Senha redefinida!", style = MaterialTheme.typography.titleLarge)
-                    Text("Agora é só entrar com a nova senha.")
-                    Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Voltar ao login") }
-                }
+    FormScaffold("Recuperar senha", onBack) {
+        when (viewModel.step) {
+            ForgotPasswordViewModel.Step.REQUEST -> FormCard(
+                title = "Recuperar senha",
+                subtitle = "Informe seu e-mail corporativo para receber um código de verificação.",
+            ) {
+                FormField("E-mail corporativo", viewModel.email, { viewModel.email = it }, keyboardType = KeyboardType.Email)
+                viewModel.error?.let { Text(it, color = RcColors.MatWarn, fontSize = 14.sp) }
+                RcButton("Enviar código", viewModel::requestCode, loading = viewModel.loading, modifier = Modifier.fillMaxWidth())
             }
-        }
-    }
-}
-
-@Composable
-private fun PasswordField(label: String, value: String, onChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        label = { Text(label) },
-        singleLine = true,
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
-private fun PrimaryButton(text: String, loading: Boolean, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        enabled = !loading,
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        shape = RoundedCornerShape(14.dp),
-    ) {
-        if (loading) {
-            CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
-        } else {
-            Text(text)
+            ForgotPasswordViewModel.Step.RESET -> FormCard(
+                title = "Nova senha",
+                subtitle = "Digite o código recebido e escolha uma nova senha.",
+            ) {
+                viewModel.devCode?.let {
+                    Text(
+                        "Ambiente de testes: seu código é $it",
+                        color = RcColors.Topbar,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth()
+                            .background(RcColors.TopbarText, RoundedCornerShape(4.dp))
+                            .padding(12.dp),
+                    )
+                }
+                FormField(
+                    "Código de verificação",
+                    viewModel.code,
+                    { viewModel.code = it.filter(Char::isDigit) },
+                    keyboardType = KeyboardType.Number,
+                )
+                FormField("Nova senha", viewModel.newPassword, { viewModel.newPassword = it }, password = true)
+                viewModel.error?.let { Text(it, color = RcColors.MatWarn, fontSize = 14.sp) }
+                RcButton("Redefinir senha", viewModel::reset, loading = viewModel.loading, modifier = Modifier.fillMaxWidth())
+            }
+            ForgotPasswordViewModel.Step.DONE -> FormCard(title = "Senha redefinida!") {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = RcColors.SuccessBg, modifier = Modifier.size(48.dp))
+                Text("Agora é só entrar com a nova senha.", color = RcColors.CardText, fontSize = 15.sp)
+                RcButton("Voltar ao login", onBack, modifier = Modifier.fillMaxWidth())
+            }
         }
     }
 }

@@ -2,36 +2,25 @@ package br.com.rotacerta.colaborador.ui.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,109 +30,87 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import br.com.rotacerta.colaborador.ui.theme.BrandAmber
-import br.com.rotacerta.colaborador.ui.theme.BrandNavy
-import br.com.rotacerta.colaborador.ui.theme.BrandNavyDark
+import androidx.compose.ui.unit.sp
+import br.com.rotacerta.colaborador.ui.components.FormCard
+import br.com.rotacerta.colaborador.ui.components.FormField
+import br.com.rotacerta.colaborador.ui.components.RcButton
+import br.com.rotacerta.colaborador.ui.components.RcTopBar
+import br.com.rotacerta.colaborador.ui.theme.RcColors
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel, onForgotPassword: () -> Unit) {
     var showPassword by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf(false) }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .imePadding(),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(BrandNavy, BrandNavyDark)))
-                .padding(horizontal = 24.dp, vertical = 40.dp),
+    Column(Modifier.fillMaxSize().background(RcColors.Background)) {
+        RcTopBar(
+            navigation = null,
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            IconButton(onClick = { showServerDialog = true }, modifier = Modifier.align(Alignment.TopEnd)) {
-                Icon(Icons.Outlined.Settings, contentDescription = "Configurar servidor", tint = Color.White.copy(alpha = 0.8f))
-            }
-            Column(Modifier.padding(top = 24.dp)) {
-                Surface(shape = RoundedCornerShape(14.dp), color = BrandAmber, modifier = Modifier.size(52.dp)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.Place, contentDescription = null, tint = BrandNavyDark, modifier = Modifier.size(30.dp))
-                    }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text("App do colaborador", color = RcColors.TextStrong, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Acompanhe o seu fretado, do ponto de embarque até a empresa.",
+                        color = RcColors.TextMenu,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
                 }
-                Spacer(Modifier.height(20.dp))
-                Text("Rota Certa", style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(
-                    "Acompanhe o seu fretado, do ponto de embarque até a empresa.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.85f),
-                    modifier = Modifier.padding(top = 6.dp),
-                )
+                IconButton(onClick = { showServerDialog = true }) {
+                    Icon(Icons.Filled.Settings, contentDescription = "Configurar servidor", tint = RcColors.TextMuted)
+                }
             }
-        }
 
-        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Entrar como colaborador", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(
-                value = viewModel.email,
-                onValueChange = { viewModel.email = it },
-                label = { Text("E-mail corporativo") },
-                placeholder = { Text("matricula@empresa.com") },
-                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = viewModel.password,
-                onValueChange = { viewModel.password = it },
-                label = { Text("Senha") },
-                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
-                trailingIcon = {
-                    IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(
-                            if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = if (showPassword) "Ocultar senha" else "Mostrar senha",
-                        )
-                    }
-                },
-                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { viewModel.submit() }),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            viewModel.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
-            Button(
-                onClick = viewModel::submit,
-                enabled = viewModel.canSubmit,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                if (viewModel.loading) {
-                    CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
-                } else {
-                    Text("Entrar")
+            FormCard(title = "Entrar", subtitle = "Use o e-mail corporativo e a senha recebidos da empresa.") {
+                FormField(
+                    label = "E-mail corporativo",
+                    value = viewModel.email,
+                    onValueChange = { viewModel.email = it },
+                    keyboardType = KeyboardType.Email,
+                    leadingIcon = Icons.Filled.Email,
+                    placeholder = "matricula@empresa.com",
+                )
+                FormField(
+                    label = "Senha",
+                    value = viewModel.password,
+                    onValueChange = { viewModel.password = it },
+                    password = !showPassword,
+                    keyboardType = KeyboardType.Password,
+                    leadingIcon = Icons.Filled.Lock,
+                    trailing = {
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(
+                                if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (showPassword) "Ocultar senha" else "Mostrar senha",
+                            )
+                        }
+                    },
+                )
+                viewModel.error?.let { Text(it, color = RcColors.MatWarn, fontSize = 14.sp) }
+                RcButton(
+                    text = "Entrar",
+                    onClick = viewModel::submit,
+                    enabled = viewModel.canSubmit,
+                    loading = viewModel.loading,
+                    icon = Icons.AutoMirrored.Filled.Login,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                TextButton(onClick = onForgotPassword, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text("Esqueci minha senha", color = RcColors.MatPrimary, fontWeight = FontWeight.Medium)
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                TextButton(onClick = onForgotPassword) { Text("Esqueci minha senha") }
-            }
+
             Text(
                 "Seu e-mail é a sua matrícula + domínio da empresa. No primeiro acesso você deverá trocar a senha.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = RcColors.TextMuted,
+                fontSize = 13.sp,
             )
         }
     }
@@ -162,17 +129,19 @@ private fun ServerUrlDialog(current: String, onDismiss: () -> Unit, onSave: (Str
     var value by remember { mutableStateOf(current) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Servidor da API") },
+        containerColor = RcColors.Panel,
+        title = { Text("Servidor da API", color = RcColors.TextStrong) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     "Emulador: http://10.0.2.2:8000/api/ · Celular: use o IP do computador na mesma rede Wi-Fi.",
-                    style = MaterialTheme.typography.bodySmall,
+                    color = RcColors.TextLabel,
+                    fontSize = 13.sp,
                 )
                 OutlinedTextField(value = value, onValueChange = { value = it }, singleLine = true, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(value) }, enabled = value.startsWith("http")) { Text("Salvar") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        confirmButton = { TextButton(onClick = { onSave(value) }, enabled = value.startsWith("http")) { Text("Salvar", color = RcColors.Accent) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = RcColors.TextMenu) } },
     )
 }

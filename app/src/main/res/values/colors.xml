@@ -1,4 +1,7 @@
 <resources>
-    <color name="brand_primary">#0F4C81</color>
-    <color name="launcher_background">#0F4C81</color>
+    <!-- Mesmas cores do painel web (app-menu.component.scss) -->
+    <color name="rc_topbar">#1E40AF</color>
+    <color name="rc_accent">#3B82F6</color>
+    <color name="rc_background">#0F172A</color>
+    <color name="launcher_background">#1E40AF</color>
 </resources>

@@ -3,9 +3,9 @@ package br.com.rotacerta.colaborador.ui.trip
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -22,41 +22,36 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rotacerta.colaborador.data.model.Trip
-import br.com.rotacerta.colaborador.ui.theme.BrandAmber
-import br.com.rotacerta.colaborador.ui.theme.BrandNavy
-import br.com.rotacerta.colaborador.ui.theme.SuccessGreen
+import br.com.rotacerta.colaborador.ui.theme.RcColors
 import kotlin.math.cos
 import kotlin.math.max
 
 /**
- * Mapa esquemático (sem SDK de mapas / sem chave de API): projeta as coordenadas
- * das paradas num Canvas. Para navegação real, o botão "Abrir no mapa" chama o app nativo.
+ * Mesmo visual do `.fake-map` do dashboard web (fundo #0f172a, grade #1e2937 de 40px,
+ * pontos com borda branca de 3px: amarelo = destaque, azul = demais), mas com as
+ * coordenadas reais das paradas. Sem SDK de mapas / chave de API.
  */
 @Composable
 fun RouteMap(trip: Trip, modifier: Modifier = Modifier) {
     val textMeasurer = rememberTextMeasurer()
-    val grid = MaterialTheme.colorScheme.outlineVariant
-    val land = MaterialTheme.colorScheme.surfaceVariant
-    val onPrimary = Color.White
-
     val points = buildList {
         trip.stops.forEach { add(it.latitude to it.longitude) }
         trip.destination?.let { add(it.latitude to it.longitude) }
         trip.lastPosition?.let { add(it.latitude to it.longitude) }
     }
 
-    Canvas(modifier.fillMaxWidth().height(220.dp)) {
-        drawRect(land)
-        val step = 28.dp.toPx()
+    Canvas(modifier.fillMaxWidth().height(240.dp)) {
+        drawRect(RcColors.Background)
+        val step = 40.dp.toPx()
+        val grid = RcColors.Panel.copy(alpha = 0.6f)
         var x = 0f
-        while (x < size.width) { drawLine(grid, Offset(x, 0f), Offset(x, size.height), 1f); x += step }
+        while (x < size.width) { drawLine(grid, Offset(x, 0f), Offset(x, size.height), 1.dp.toPx()); x += step }
         var y = 0f
-        while (y < size.height) { drawLine(grid, Offset(0f, y), Offset(size.width, y), 1f); y += step }
+        while (y < size.height) { drawLine(grid, Offset(0f, y), Offset(size.width, y), 1.dp.toPx()); y += step }
         if (points.isEmpty()) return@Canvas
 
-        val project = projector(points, size, padding = 32.dp.toPx())
+        val project = projector(points, size, padding = 28.dp.toPx())
 
-        // Trajeto: paradas em ordem → empresa
         val path = Path()
         val route = trip.stops.map { it.latitude to it.longitude } +
             listOfNotNull(trip.destination?.let { it.latitude to it.longitude })
@@ -64,21 +59,20 @@ fun RouteMap(trip: Trip, modifier: Modifier = Modifier) {
             val o = project(p)
             if (i == 0) path.moveTo(o.x, o.y) else path.lineTo(o.x, o.y)
         }
-        drawPath(path, BrandNavy.copy(alpha = 0.25f), style = Stroke(12.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         drawPath(
             path,
-            BrandNavy,
-            style = Stroke(4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.cornerPathEffect(12f)),
+            RcColors.Accent,
+            style = Stroke(3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.cornerPathEffect(12f)),
         )
 
         trip.stops.forEach { stop ->
             val o = project(stop.latitude to stop.longitude)
-            val r = if (stop.isMyStop) 14.dp.toPx() else 11.dp.toPx()
-            drawCircle(if (stop.isMyStop) BrandAmber else Color.White, r, o)
-            drawCircle(BrandNavy, r, o, style = Stroke(3.dp.toPx()))
+            val r = if (stop.isMyStop) 12.dp.toPx() else 10.dp.toPx()
+            drawCircle(Color.White, r, o)
+            drawCircle(if (stop.isMyStop) RcColors.Warning else RcColors.Accent, r - 3.dp.toPx(), o)
             val label = textMeasurer.measure(
                 "${stop.sequence + 1}",
-                TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandNavy),
+                TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (stop.isMyStop) RcColors.Background else Color.White),
             )
             drawText(label, topLeft = Offset(o.x - label.size.width / 2f, o.y - label.size.height / 2f))
         }
@@ -86,8 +80,10 @@ fun RouteMap(trip: Trip, modifier: Modifier = Modifier) {
         trip.destination?.let {
             val o = project(it.latitude to it.longitude)
             val s = 22.dp.toPx()
-            drawRoundRect(BrandNavy, Offset(o.x - s / 2, o.y - s / 2), Size(s, s), androidx.compose.ui.geometry.CornerRadius(6f))
-            val label = textMeasurer.measure("E", TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = onPrimary))
+            drawRoundRect(Color.White, Offset(o.x - s / 2, o.y - s / 2), Size(s, s), CornerRadius(5.dp.toPx()))
+            val inner = s - 6.dp.toPx()
+            drawRoundRect(RcColors.Topbar, Offset(o.x - inner / 2, o.y - inner / 2), Size(inner, inner), CornerRadius(3.dp.toPx()))
+            val label = textMeasurer.measure("E", TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White))
             drawText(label, topLeft = Offset(o.x - label.size.width / 2f, o.y - label.size.height / 2f))
         }
 
@@ -96,9 +92,9 @@ fun RouteMap(trip: Trip, modifier: Modifier = Modifier) {
 }
 
 private fun DrawScope.drawVehicle(center: Offset) {
-    drawCircle(SuccessGreen.copy(alpha = 0.25f), 20.dp.toPx(), center)
-    drawCircle(Color.White, 10.dp.toPx(), center)
-    drawCircle(SuccessGreen, 7.dp.toPx(), center)
+    drawCircle(RcColors.Success.copy(alpha = 0.25f), 18.dp.toPx(), center)
+    drawCircle(Color.White, 9.dp.toPx(), center)
+    drawCircle(RcColors.Success, 6.dp.toPx(), center)
 }
 
 private fun projector(points: List<Pair<Double, Double>>, size: Size, padding: Float): (Pair<Double, Double>) -> Offset {

@@ -1,43 +1,30 @@
 package br.com.rotacerta.colaborador.ui.trip
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.Call
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.DirectionsBus
-import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.EventBusy
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,30 +35,43 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import br.com.rotacerta.colaborador.data.formatCountdown
 import br.com.rotacerta.colaborador.data.model.BoardingStatus
 import br.com.rotacerta.colaborador.data.model.Trip
 import br.com.rotacerta.colaborador.data.nextDeparture
 import br.com.rotacerta.colaborador.data.weekdayLabel
 import br.com.rotacerta.colaborador.platform.PlatformActions
+import br.com.rotacerta.colaborador.ui.components.Badge
+import br.com.rotacerta.colaborador.ui.components.BadgeKind
 import br.com.rotacerta.colaborador.ui.components.InfoRow
+import br.com.rotacerta.colaborador.ui.components.InnerCard
 import br.com.rotacerta.colaborador.ui.components.LoadingState
+import br.com.rotacerta.colaborador.ui.components.MenuItem
 import br.com.rotacerta.colaborador.ui.components.MessageState
-import br.com.rotacerta.colaborador.ui.components.SectionCard
-import br.com.rotacerta.colaborador.ui.components.StatusPill
+import br.com.rotacerta.colaborador.ui.components.PageHeader
+import br.com.rotacerta.colaborador.ui.components.Panel
+import br.com.rotacerta.colaborador.ui.components.ProgressRow
+import br.com.rotacerta.colaborador.ui.components.RcButton
+import br.com.rotacerta.colaborador.ui.components.RcStrokedButton
+import br.com.rotacerta.colaborador.ui.components.StatCard
+import br.com.rotacerta.colaborador.ui.components.shortLabel
 import br.com.rotacerta.colaborador.ui.components.style
-import br.com.rotacerta.colaborador.ui.theme.BrandNavy
-import br.com.rotacerta.colaborador.ui.theme.BrandNavyDark
-import br.com.rotacerta.colaborador.ui.theme.DangerRed
-import br.com.rotacerta.colaborador.ui.theme.SuccessGreen
-import kotlinx.coroutines.delay
+import br.com.rotacerta.colaborador.ui.theme.RcColors
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlinx.coroutines.delay
+
+private val PT_BR: Locale = Locale.forLanguageTag("pt-BR")
+
+/** Mesmo formato do cabeçalho do dashboard web: "Quinta-feira, 08 de maio de 2025 · 07:43". */
+fun headerDate(now: LocalDateTime): String =
+    now.format(DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM 'de' yyyy '·' HH:mm", PT_BR))
+        .replaceFirstChar { it.uppercase() }
 
 @Composable
 fun TripScreen(
@@ -88,7 +88,7 @@ fun TripScreen(
         state.trips.isEmpty() -> MessageState(
             "Você ainda não está em nenhuma rota",
             "Fale com o RH ou com a gestão de transporte da sua empresa para ser incluído em uma rota.",
-            icon = Icons.Outlined.EventBusy,
+            icon = Icons.Filled.EventBusy,
             actionLabel = "Atualizar",
             onAction = onRefresh,
         )
@@ -109,175 +109,161 @@ private fun TripContent(
     var now by remember { mutableStateOf(LocalDateTime.now()) }
     LaunchedEffect(Unit) { while (true) { delay(30_000); now = LocalDateTime.now() } }
     val departure = nextDeparture(trip.schedules, now)
-    val firstName = state.profile?.name?.substringBefore(' ')
+    val routeStyle = trip.route.status.style()
+    val boardingStyle = trip.boardingStatus.style()
+    val stop = trip.myStop
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        // Cabeçalho com status da rota e próxima saída
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(BrandNavy, BrandNavyDark)))
-                .padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 24.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        if (firstName != null) "Olá, $firstName" else "Minha viagem",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                    )
-                    Text(trip.company.name, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            PageHeader("Minha viagem", headerDate(now), Modifier.weight(1f))
+            IconButton(onClick = onRefresh) { Icon(Icons.Filled.Refresh, contentDescription = "Atualizar", tint = RcColors.TextLabel) }
+        }
+
+        if (state.trips.size > 1) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.trips.forEach { t ->
+                    MenuItem(Icons.Filled.Route, t.route.name, t.id == trip.id, { onSelectTrip(t.id) }, Modifier.padding(horizontal = 4.dp))
                 }
-                IconButton(onClick = onRefresh) {
-                    Icon(Icons.Outlined.Refresh, contentDescription = "Atualizar", tint = Color.White)
-                }
-            }
-            Spacer(Modifier.height(18.dp))
-            Text("PRÓXIMA SAÍDA", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f))
-            if (departure != null) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        departure.at.format(DateTimeFormatter.ofPattern("HH:mm")),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        "  ${dayLabel(departure.at, now)} · ${formatCountdown(departure.until)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White.copy(alpha = 0.85f),
-                        modifier = Modifier.padding(bottom = 6.dp),
-                    )
-                }
-            } else {
-                Text("Sem horários cadastrados", style = MaterialTheme.typography.titleMedium, color = Color.White)
-            }
-            Spacer(Modifier.height(10.dp))
-            val routeStyle = trip.route.status.style()
-            Box(Modifier.background(Color.White, RoundedCornerShape(50))) {
-                StatusPill(routeStyle.label, routeStyle.color)
             }
         }
 
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (state.trips.size > 1) {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    state.trips.forEach { t ->
-                        FilterChip(
-                            selected = t.id == trip.id,
-                            onClick = { onSelectTrip(t.id) },
-                            label = { Text(t.route.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        )
+        // .stats-grid (2 colunas no celular)
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StatCard(
+                "próxima saída",
+                departure?.at?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--:--",
+                departure?.let { "${dayLabel(it.at, now)} · ${formatCountdown(it.until)}" } ?: "sem horários",
+                Modifier.weight(1f).fillMaxHeight(),
+            )
+            StatCard(
+                "status da rota",
+                routeStyle.label,
+                trip.route.name,
+                Modifier.weight(1f).fillMaxHeight(),
+                valueColor = routeStyle.kind.fg,
+            )
+        }
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StatCard(
+                "meu ponto",
+                stop?.let { "${it.sequence + 1} de ${trip.stops.size}" } ?: "--",
+                stop?.title ?: "não definido",
+                Modifier.weight(1f).fillMaxHeight(),
+            )
+            StatCard(
+                "presença hoje",
+                trip.boardingStatus.shortLabel(),
+                if (trip.boardingStatus == BoardingStatus.CONFIRMED) "motorista avisado" else "responda abaixo",
+                Modifier.weight(1f).fillMaxHeight(),
+                valueColor = boardingStyle.kind.fg,
+                noteColor = if (trip.boardingStatus == BoardingStatus.CONFIRMED) RcColors.Success else RcColors.TextMuted,
+            )
+        }
+
+        BoardingPanel(trip, state.updatingBoarding, onBoarding)
+
+        Panel(title = "Meu ponto de embarque") {
+            if (stop == null) {
+                Text("Nenhum ponto definido para você nesta rota.", color = RcColors.TextMenu)
+            } else {
+                InnerCard {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(Modifier.weight(1f)) {
+                            Text(stop.title, color = RcColors.Text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            stop.subtitle?.let { Text(it, color = RcColors.TextMuted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp)) }
+                        }
+                        Badge("parada ${stop.sequence + 1}", BadgeKind.INFO, Modifier.padding(start = 8.dp))
                     }
+                    ProgressRow(
+                        "Posição na rota: ${stop.sequence + 1} de ${trip.stops.size} paradas",
+                        (stop.sequence + 1f) / trip.stops.size.coerceAtLeast(1),
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    RcStrokedButton("Como chegar", { actions.openMap(stop.latitude, stop.longitude, stop.title) }, Modifier.weight(1f), icon = Icons.Filled.Map)
+                    RcStrokedButton("Ver rota", onOpenRoute, Modifier.weight(1f), icon = Icons.Filled.Route)
                 }
             }
+        }
 
-            BoardingCard(trip, state.updatingBoarding, onBoarding)
-
-            SectionCard(title = "Meu ponto de embarque") {
-                val stop = trip.myStop
-                if (stop == null) {
-                    Text("Nenhum ponto definido para você nesta rota.")
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier.size(44.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(Icons.Outlined.Place, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                        }
-                        Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                            Text(stop.title, style = MaterialTheme.typography.titleMedium)
-                            stop.subtitle?.let {
-                                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+        Panel(
+            title = "Veículo e motorista",
+            caption = state.lastUpdated?.let { "atualizado às ${it.format(DateTimeFormatter.ofPattern("HH:mm"))}" },
+        ) {
+            trip.vehicle?.let { v ->
+                InnerCard {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(Modifier.weight(1f)) {
+                            Text(v.model, color = RcColors.Text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Parada ${stop.sequence + 1} de ${trip.stops.size}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
+                                v.plateNumber + (v.capacity?.let { " · $it lugares" } ?: ""),
+                                color = RcColors.TextMuted,
+                                fontSize = 13.sp,
                                 modifier = Modifier.padding(top = 4.dp),
                             )
                         }
+                        Badge(routeStyle.label, routeStyle.kind)
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { actions.openMap(stop.latitude, stop.longitude, stop.title) }) {
-                            Icon(Icons.Outlined.Map, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("  Como chegar")
-                        }
-                        TextButton(onClick = onOpenRoute) { Text("Ver rota", maxLines = 1) }
+                    trip.events.firstOrNull()?.let { ev ->
+                        Text("Último evento: ${ev.description.ifBlank { ev.eventType }}", color = RcColors.TextLabel, fontSize = 14.sp)
                     }
                 }
             }
-
-            SectionCard(title = "Veículo e motorista") {
-                trip.vehicle?.let {
-                    InfoRow(Icons.Outlined.DirectionsBus, it.model, "Placa ${it.plateNumber}" + (it.capacity?.let { c -> " · $c lugares" } ?: ""))
-                }
-                trip.driver?.let { driver ->
-                    HorizontalDivider()
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        InfoRow(Icons.Outlined.Person, "Motorista", driver.name, Modifier.weight(1f))
-                        FilledTonalIconButton(onClick = { actions.dial(driver.phone) }) {
-                            Icon(Icons.Outlined.Call, contentDescription = "Ligar para o motorista")
-                        }
-                    }
-                }
-                if (trip.vehicle == null && trip.driver == null) Text("Veículo ainda não definido.")
-            }
-
-            if (trip.schedules.isNotEmpty()) {
-                SectionCard(title = "Horários da rota") {
-                    trip.schedules.forEach { s ->
-                        InfoRow(Icons.Outlined.AccessTime, s.weekdays.joinToString(" · ") { weekdayLabel(it) }, s.time)
-                    }
+            trip.driver?.let { driver ->
+                InfoRow(Icons.Filled.Person, "Motorista", driver.name) {
+                    FilledIconButton(
+                        onClick = { actions.dial(driver.phone) },
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = RcColors.Accent, contentColor = RcColors.White),
+                    ) { Icon(Icons.Filled.Call, contentDescription = "Ligar para o motorista") }
                 }
             }
+            if (trip.vehicle == null && trip.driver == null) Text("Veículo ainda não definido.", color = RcColors.TextMenu)
+        }
 
-            state.lastUpdated?.let {
-                Text(
-                    "Atualizado às ${it.format(DateTimeFormatter.ofPattern("HH:mm:ss"))} · atualiza automaticamente",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+        if (trip.schedules.isNotEmpty()) {
+            Panel(title = "Horários da rota", caption = "dias úteis") {
+                trip.schedules.forEach { s ->
+                    InfoRow(Icons.Filled.Schedule, s.weekdays.joinToString(" · ") { weekdayLabel(it) }, s.time)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun BoardingCard(trip: Trip, updating: Boolean, onBoarding: (BoardingStatus) -> Unit) {
+private fun BoardingPanel(trip: Trip, updating: Boolean, onBoarding: (BoardingStatus) -> Unit) {
     val style = trip.boardingStatus.style()
-    SectionCard(title = "Você vai embarcar hoje?") {
-        StatusPill(style.label, style.color)
+    val confirmed = trip.boardingStatus == BoardingStatus.CONFIRMED
+    val absent = trip.boardingStatus == BoardingStatus.ABSENT
+    Panel(title = "Você vai embarcar hoje?") {
+        Badge(style.label, style.kind)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            val confirmed = trip.boardingStatus == BoardingStatus.CONFIRMED
-            val absent = trip.boardingStatus == BoardingStatus.ABSENT
-            Button(
-                onClick = { onBoarding(BoardingStatus.CONFIRMED) },
+            RcButton(
+                "Sim, vou",
+                { onBoarding(BoardingStatus.CONFIRMED) },
+                Modifier.weight(1f),
+                icon = Icons.Filled.Check,
                 enabled = !updating,
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                colors = if (confirmed) ButtonDefaults.buttonColors(containerColor = SuccessGreen)
-                else ButtonDefaults.buttonColors(),
-            ) {
-                Icon(Icons.Outlined.Done, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Sim, vou", maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            OutlinedButton(
-                onClick = { onBoarding(BoardingStatus.ABSENT) },
+                color = if (confirmed) RcColors.SuccessBg else RcColors.MatPrimary,
+            )
+            RcStrokedButton(
+                "Não vou",
+                { onBoarding(BoardingStatus.ABSENT) },
+                Modifier.weight(1f),
+                icon = Icons.Filled.Close,
                 enabled = !updating,
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                colors = if (absent) ButtonDefaults.outlinedButtonColors(containerColor = DangerRed.copy(alpha = 0.1f), contentColor = DangerRed)
-                else ButtonDefaults.outlinedButtonColors(),
-            ) {
-                Icon(Icons.Outlined.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Não vou", maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+                color = if (absent) RcColors.Danger else RcColors.MatWarn,
+                borderColor = if (absent) RcColors.Danger else RcColors.Divider,
+                containerColor = if (absent) RcColors.DangerBg else Color.Transparent,
+            )
         }
         if (trip.boardingStatus != BoardingStatus.PENDING) {
-            TextButton(onClick = { onBoarding(BoardingStatus.PENDING) }, enabled = !updating) { Text("Desfazer resposta") }
+            TextButton(onClick = { onBoarding(BoardingStatus.PENDING) }, enabled = !updating) {
+                Text("Desfazer resposta", color = RcColors.Accent)
+            }
         }
     }
 }

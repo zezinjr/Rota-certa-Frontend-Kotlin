@@ -4,17 +4,24 @@ Protótipo do aplicativo **Android nativo** para os **colaboradores** (passageir
 feito em **Kotlin + Jetpack Compose (Material 3)** e consumindo a API do
 [backend Django](https://github.com/zezinjr/Rota-certa-Backend-Django).
 
+O visual segue **as mesmas configurações do painel web Angular**: topbar `#1e40af` com o logo
+“Rotacerta”, layout escuro `#0f172a` com painéis `#1e2937`, badges, botões do tema Material
+`indigo-pink`, Roboto e Material Icons. A tabela completa de tokens está em
+[docs/DESIGN-TOKENS.md](docs/DESIGN-TOKENS.md).
+
+![Painel web x app](docs/screenshots/00-comparativo-web-app.png)
+
 | Login | Primeiro acesso | Minha viagem | Embarque confirmado |
 |---|---|---|---|
 | ![](docs/screenshots/01-login.png) | ![](docs/screenshots/02-primeiro-acesso.png) | ![](docs/screenshots/03-viagem.png) | ![](docs/screenshots/04-embarque-confirmado.png) |
 
-| Rota | Avisos | Perfil |
+| Rota | Alertas | Perfil |
 |---|---|---|
 | ![](docs/screenshots/05-rota.png) | ![](docs/screenshots/06-avisos.png) | ![](docs/screenshots/07-perfil.png) |
 
 > As capturas foram geradas executando este mesmo código Kotlin/Compose contra o backend
-> rodando localmente com o seed `seed_manaus_demo` (renderização desktop; no Android
-> as fontes/ícones seguem o padrão do sistema).
+> rodando localmente com o seed `seed_manaus_demo` (renderização desktop com fonte DejaVu;
+> no Android a fonte é Roboto, como no painel).
 
 ## ✨ Funcionalidades
 
@@ -25,7 +32,7 @@ feito em **Kotlin + Jetpack Compose (Material 3)** e consumindo a API do
   status da rota (Aguardando / Em rota / Atrasado), ponto de embarque, veículo e motorista.
 - **Confirmação de embarque**: “Sim, vou” / “Não vou” / desfazer — o motorista vê no app dele.
 - **Rota**: mapa esquemático (sem SDK/chave de mapas) + timeline das paradas com o seu ponto destacado.
-- **Avisos**: eventos da rota (saída, parada, atraso, ocorrência, chegada).
+- **Alertas**: eventos da rota (saída, parada, atraso, ocorrência, chegada).
 - **Perfil**: dados do colaborador, alterar senha e sair.
 - Atualização automática a cada 30 s, renovação automática do token (refresh) e
   ações nativas: ligar para o motorista e abrir o ponto no app de mapas.
@@ -45,7 +52,8 @@ app/src/main/java/br/com/rotacerta/colaborador/
 │   ├── trip/         # Viagem, Rota (mapa + timeline), Avisos, TripViewModel
 │   ├── profile/
 │   ├── navigation/   # Fluxo por estado de sessão + bottom navigation
-│   ├── components/ · theme/
+│   ├── components/   # equivalentes Compose dos componentes do painel (.panel, .badge…)
+│   └── theme/        # RcColors: tokens visuais compartilhados com o Angular
 └── platform/         # MainActivity, Application, SharedPreferences, intents
 ```
 

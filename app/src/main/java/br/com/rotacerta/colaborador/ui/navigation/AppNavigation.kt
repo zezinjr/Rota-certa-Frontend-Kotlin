@@ -1,23 +1,20 @@
 package br.com.rotacerta.colaborador.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Route
-import androidx.compose.material.icons.outlined.DirectionsBus
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Route
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -34,6 +32,8 @@ import androidx.navigation.compose.rememberNavController
 import br.com.rotacerta.colaborador.data.AppContainer
 import br.com.rotacerta.colaborador.data.session.SessionState
 import br.com.rotacerta.colaborador.platform.PlatformActions
+import br.com.rotacerta.colaborador.ui.components.MenuItem
+import br.com.rotacerta.colaborador.ui.components.RcTopBar
 import br.com.rotacerta.colaborador.ui.login.ChangePasswordScreen
 import br.com.rotacerta.colaborador.ui.login.ChangePasswordViewModel
 import br.com.rotacerta.colaborador.ui.login.ForgotPasswordScreen
@@ -41,6 +41,7 @@ import br.com.rotacerta.colaborador.ui.login.ForgotPasswordViewModel
 import br.com.rotacerta.colaborador.ui.login.LoginScreen
 import br.com.rotacerta.colaborador.ui.login.LoginViewModel
 import br.com.rotacerta.colaborador.ui.profile.ProfileScreen
+import br.com.rotacerta.colaborador.ui.theme.RcColors
 import br.com.rotacerta.colaborador.ui.trip.AlertsScreen
 import br.com.rotacerta.colaborador.ui.trip.RouteScreen
 import br.com.rotacerta.colaborador.ui.trip.TripScreen
@@ -79,11 +80,12 @@ private fun AuthFlow(container: AppContainer) {
     }
 }
 
-private enum class Tab(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
-    TRIP("viagem", "Viagem", Icons.Outlined.DirectionsBus, Icons.Filled.DirectionsBus),
-    ROUTE("rota", "Rota", Icons.Outlined.Route, Icons.Filled.Route),
-    ALERTS("avisos", "Avisos", Icons.Outlined.Notifications, Icons.Filled.Notifications),
-    PROFILE("perfil", "Perfil", Icons.Outlined.Person, Icons.Filled.Person),
+// Mesmos ícones (Material Icons preenchidos) do menu lateral do painel.
+private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
+    TRIP("viagem", "Viagem", Icons.Filled.DirectionsBus),
+    ROUTE("rota", "Rota", Icons.Filled.Route),
+    ALERTS("avisos", "Alertas", Icons.Filled.Notifications),
+    PROFILE("perfil", "Perfil", Icons.Filled.Person),
 }
 
 @Composable
@@ -105,19 +107,28 @@ private fun MainFlow(container: AppContainer, actions: PlatformActions, personId
         restoreState = true
     }
 
+    val person = (container.session.state.collectAsState().value as? SessionState.LoggedIn)?.person
+
     Scaffold(
+        containerColor = RcColors.Background,
         snackbarHost = { SnackbarHost(snackbar) },
-        bottomBar = {
+        topBar = {
             if (Tab.entries.any { it.route == current }) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    Tab.entries.forEach { tab ->
-                        val selected = current == tab.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { go(tab.route) },
-                            icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
-                            label = { Text(tab.label) },
-                        )
+                RcTopBar(userName = person?.name?.substringBefore(' '), userRole = "Colaborador")
+            }
+        },
+        bottomBar = {
+            // Estilo do menu lateral (.sidebar / .menu-item): fundo #0f172a, item ativo #1e40af.
+            if (Tab.entries.any { it.route == current }) {
+                Column(Modifier.background(RcColors.Background)) {
+                    HorizontalDivider(color = RcColors.Panel, thickness = 1.dp)
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Tab.entries.forEach { tab ->
+                            MenuItem(tab.icon, tab.label, current == tab.route, { go(tab.route) }, Modifier.weight(1f))
+                        }
                     }
                 }
             }

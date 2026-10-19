@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pino de localização estilizado (108dp, área segura 66dp). -->
+<!-- Pino branco com o ponto azul (#3b82f6) do logo "Rotacerta" (108dp, área segura 66dp). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -7,8 +7,8 @@
     android:viewportHeight="108">
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,28c-10.5,0 -19,8.5 -19,19c0,14.2 19,33 19,33s19,-18.8 19,-33c0,-10.5 -8.5,-19 -19,-19zM54,54a7,7 0,1 1,0 -14a7,7 0,1 1,0 14z" />
+        android:pathData="M54,28c-10.5,0 -19,8.5 -19,19c0,14.2 19,33 19,33s19,-18.8 19,-33c0,-10.5 -8.5,-19 -19,-19z" />
     <path
-        android:fillColor="#FFC857"
-        android:pathData="M40,82h28v3h-28z" />
+        android:fillColor="#3B82F6"
+        android:pathData="M54,47m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
 </vector>

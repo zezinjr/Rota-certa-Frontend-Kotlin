@@ -1,7 +1,8 @@
 <resources>
-    <!-- Tema base da janela; as cores do app vêm do MaterialTheme (Compose). -->
-    <style name="Theme.RotaCerta" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/brand_primary</item>
-        <item name="android:windowBackground">@android:color/white</item>
+    <!-- Janela no tema escuro do painel; as cores das telas vêm do RotaCertaTheme (Compose). -->
+    <style name="Theme.RotaCerta" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/rc_topbar</item>
+        <item name="android:navigationBarColor">@color/rc_background</item>
+        <item name="android:windowBackground">@color/rc_background</item>
     </style>
 </resources>
