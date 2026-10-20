@@ -32,7 +32,7 @@ import kotlin.math.max
  * coordenadas reais das paradas. Sem SDK de mapas / chave de API.
  */
 @Composable
-fun RouteMap(trip: Trip, modifier: Modifier = Modifier) {
+fun RouteMap(trip: Trip, modifier: Modifier = Modifier.height(240.dp)) {
     val textMeasurer = rememberTextMeasurer()
     val points = buildList {
         trip.stops.forEach { add(it.latitude to it.longitude) }
@@ -40,7 +40,7 @@ fun RouteMap(trip: Trip, modifier: Modifier = Modifier) {
         trip.lastPosition?.let { add(it.latitude to it.longitude) }
     }
 
-    Canvas(modifier.fillMaxWidth().height(240.dp)) {
+    Canvas(modifier.fillMaxWidth()) {
         drawRect(RcColors.Background)
         val step = 40.dp.toPx()
         val grid = RcColors.Panel.copy(alpha = 0.6f)

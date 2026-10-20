@@ -1,9 +1,22 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// Chave do Google Maps (nunca versionada). Ordem: -PMAPS_API_KEY, variável de
+// ambiente MAPS_API_KEY (GitHub Actions) ou MAPS_API_KEY=... no local.properties.
+// Sem chave, o app mostra o mapa esquemático das paradas no lugar do Google Maps.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val mapsApiKey: String = providers.gradleProperty("MAPS_API_KEY").orNull
+    ?: System.getenv("MAPS_API_KEY")
+    ?: localProperties.getProperty("MAPS_API_KEY")
+    ?: ""
 
 android {
     namespace = "br.com.rotacerta.colaborador"
@@ -21,6 +34,9 @@ android {
         // ou gere o APK com -PapiBaseUrl=http://IP-DO-PC:8000/api/
         val apiBaseUrl = providers.gradleProperty("apiBaseUrl").getOrElse("http://10.0.2.2:8000/api/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("boolean", "MAPS_ENABLED", "${mapsApiKey.isNotBlank()}")
     }
 
     buildTypes {
@@ -61,6 +77,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.maps.compose)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)

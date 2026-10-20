@@ -32,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.rotacerta.colaborador.data.model.Trip
-import br.com.rotacerta.colaborador.platform.PlatformActions
 import br.com.rotacerta.colaborador.ui.components.Badge
 import br.com.rotacerta.colaborador.ui.components.BadgeKind
 import br.com.rotacerta.colaborador.ui.components.LoadingState
@@ -44,17 +43,17 @@ import br.com.rotacerta.colaborador.ui.components.style
 import br.com.rotacerta.colaborador.ui.theme.RcColors
 
 @Composable
-fun RouteScreen(state: TripUiState, actions: PlatformActions) {
+fun RouteScreen(state: TripUiState, onOpenMap: () -> Unit) {
     val trip = state.selectedTrip
     when {
-        trip != null -> RouteContent(trip, actions)
+        trip != null -> RouteContent(trip, onOpenMap)
         state.loading -> LoadingState()
         else -> MessageState("Sem rota", "Você ainda não está vinculado a uma rota.")
     }
 }
 
 @Composable
-private fun RouteContent(trip: Trip, actions: PlatformActions) {
+private fun RouteContent(trip: Trip, onOpenMap: () -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -62,12 +61,15 @@ private fun RouteContent(trip: Trip, actions: PlatformActions) {
         PageHeader(trip.route.name, "${trip.stops.size} paradas · destino ${trip.company.name}")
 
         Panel(title = "Mapa da rota", caption = trip.route.status.style().label) {
-            Box(Modifier.clip(RoundedCornerShape(10.dp))) { RouteMap(trip) }
+            Box(Modifier.clip(RoundedCornerShape(10.dp))) {
+                LocalTripMap.current(TripMapRequest(trip, Modifier.fillMaxWidth().height(240.dp), interactive = false))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Legend(RcColors.Warning, "seu ponto")
                 Legend(RcColors.Accent, "paradas")
                 Legend(RcColors.Success, "van")
             }
+            RcStrokedButton("Abrir mapa", onOpenMap, Modifier.fillMaxWidth(), icon = Icons.Filled.Map)
         }
 
         Panel(title = "Paradas", caption = "ordem de embarque") {
@@ -95,14 +97,6 @@ private fun RouteContent(trip: Trip, actions: PlatformActions) {
             }
         }
 
-        trip.destination?.let { dest ->
-            RcStrokedButton(
-                "Abrir destino no mapa",
-                { actions.openMap(dest.latitude, dest.longitude, trip.company.name) },
-                Modifier.fillMaxWidth(),
-                icon = Icons.Filled.Map,
-            )
-        }
     }
 }
 

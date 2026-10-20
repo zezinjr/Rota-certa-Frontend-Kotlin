@@ -93,6 +93,23 @@ Os endpoints `/api/me/*` exigem Bearer token de uma pessoa do tipo `EMPLOYEE`.
 3. **Usuário de teste** (seed): `mne007@amazonialogistica.com` / `RotaCerta@2026`
    (qualquer `mneXXX@<domínio da empresa>` funciona; o 1º acesso pede nova senha).
 
+## 🗺️ Chave do Google Maps
+
+O mapa usa o **Maps SDK for Android** (biblioteca `maps-compose`). Exibir o mapa no app Android não tem custo, mas a chave exige uma conta de faturamento ativa no Google Cloud. A chave **nunca vai para o Git**.
+
+1. No [Google Cloud Console](https://console.cloud.google.com/): crie ou escolha um projeto, ative a cobrança e, em **APIs e serviços → Biblioteca**, ative o **Maps SDK for Android**.
+2. Em **APIs e serviços → Credenciais → Criar credenciais → Chave de API**.
+3. Restrinja a chave: **Apps Android**, pacote `br.com.rotacerta.colaborador` + SHA-1 do seu certificado de debug (`./gradlew signingReport`, campo SHA1 da variante `debug`). Em **Restrições de API**, deixe só o *Maps SDK for Android*.
+4. No arquivo `local.properties` (na pasta `colaborador-android`; ele já é ignorado pelo Git), adicione:
+   ```properties
+   MAPS_API_KEY=sua-chave-aqui
+   ```
+5. Rode o app de novo. O emulador precisa de uma imagem **com Google Play/Google APIs**.
+
+Para o APK gerado pelo GitHub Actions, cadastre o mesmo valor em **Settings → Secrets and variables → Actions → New repository secret** com o nome `MAPS_API_KEY`. Atenção: o certificado de debug do Actions muda a cada execução. Para esse APK, crie uma chave separada, restrita só às APIs, ou configure um certificado fixo.
+
+> Não reutilize a chave que aparece no `.env.example` do backend: ela ficou pública no GitHub e deve ser revogada.
+
 ## 📦 Baixar o APK pronto (GitHub Actions)
 
 O workflow [`android-apk.yml`](../../.github/workflows/android-apk.yml) gera o APK de debug a cada

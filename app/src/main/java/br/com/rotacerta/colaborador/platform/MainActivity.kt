@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import br.com.rotacerta.colaborador.BuildConfig
 import br.com.rotacerta.colaborador.ui.navigation.RotaCertaRoot
 import br.com.rotacerta.colaborador.ui.theme.RotaCertaTheme
+import br.com.rotacerta.colaborador.ui.trip.LocalTripMap
 
 class MainActivity : ComponentActivity(), PlatformActions {
 
@@ -25,7 +28,14 @@ class MainActivity : ComponentActivity(), PlatformActions {
         setContent {
             RotaCertaTheme {
                 Surface(Modifier.fillMaxSize().safeDrawingPadding(), color = MaterialTheme.colorScheme.background) {
-                    RotaCertaRoot(container, this@MainActivity)
+                    if (BuildConfig.MAPS_ENABLED) {
+                        // Com chave configurada, as telas usam o Google Maps no lugar do mapa esquemático.
+                        CompositionLocalProvider(LocalTripMap provides GoogleTripMapRenderer) {
+                            RotaCertaRoot(container, this@MainActivity)
+                        }
+                    } else {
+                        RotaCertaRoot(container, this@MainActivity)
+                    }
                 }
             }
         }
@@ -36,7 +46,8 @@ class MainActivity : ComponentActivity(), PlatformActions {
     }
 
     override fun openMap(latitude: Double, longitude: Double, label: String) {
-        val uri = Uri.parse("geo:$latitude,$longitude?q=$latitude,$longitude(${Uri.encode(label)})")
+        // Rota a pé até o ponto no app do Google Maps (ou no navegador, se não houver o app).
+        val uri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=walking")
         launch(Intent(Intent.ACTION_VIEW, uri))
     }
 

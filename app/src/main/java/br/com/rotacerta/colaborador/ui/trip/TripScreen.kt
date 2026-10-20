@@ -81,6 +81,7 @@ fun TripScreen(
     onSelectTrip: (Long) -> Unit,
     onBoarding: (BoardingStatus) -> Unit,
     onOpenRoute: () -> Unit,
+    onOpenMap: () -> Unit,
 ) {
     when {
         state.loading && state.trips.isEmpty() -> LoadingState()
@@ -92,7 +93,7 @@ fun TripScreen(
             actionLabel = "Atualizar",
             onAction = onRefresh,
         )
-        else -> TripContent(state, state.selectedTrip!!, actions, onRefresh, onSelectTrip, onBoarding, onOpenRoute)
+        else -> TripContent(state, state.selectedTrip!!, actions, onRefresh, onSelectTrip, onBoarding, onOpenRoute, onOpenMap)
     }
 }
 
@@ -105,6 +106,7 @@ private fun TripContent(
     onSelectTrip: (Long) -> Unit,
     onBoarding: (BoardingStatus) -> Unit,
     onOpenRoute: () -> Unit,
+    onOpenMap: () -> Unit,
 ) {
     var now by remember { mutableStateOf(LocalDateTime.now()) }
     LaunchedEffect(Unit) { while (true) { delay(30_000); now = LocalDateTime.now() } }
@@ -183,7 +185,7 @@ private fun TripContent(
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    RcStrokedButton("Como chegar", { actions.openMap(stop.latitude, stop.longitude, stop.title) }, Modifier.weight(1f), icon = Icons.Filled.Map)
+                    RcStrokedButton("Ver no mapa", onOpenMap, Modifier.weight(1f), icon = Icons.Filled.Map)
                     RcStrokedButton("Ver rota", onOpenRoute, Modifier.weight(1f), icon = Icons.Filled.Route)
                 }
             }

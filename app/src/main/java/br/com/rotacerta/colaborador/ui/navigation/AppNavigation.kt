@@ -43,6 +43,8 @@ import br.com.rotacerta.colaborador.ui.login.LoginViewModel
 import br.com.rotacerta.colaborador.ui.profile.ProfileScreen
 import br.com.rotacerta.colaborador.ui.theme.RcColors
 import br.com.rotacerta.colaborador.ui.trip.AlertsScreen
+import br.com.rotacerta.colaborador.ui.trip.MapFocus
+import br.com.rotacerta.colaborador.ui.trip.MapScreen
 import br.com.rotacerta.colaborador.ui.trip.RouteScreen
 import br.com.rotacerta.colaborador.ui.trip.TripScreen
 import br.com.rotacerta.colaborador.ui.trip.TripViewModel
@@ -143,9 +145,13 @@ private fun MainFlow(container: AppContainer, actions: PlatformActions, personId
                     onSelectTrip = tripViewModel::selectTrip,
                     onBoarding = tripViewModel::setBoarding,
                     onOpenRoute = { go(Tab.ROUTE.route) },
+                    onOpenMap = { nav.navigate("mapa-meu-ponto") },
                 )
             }
-            composable(Tab.ROUTE.route) { RouteScreen(state, actions) }
+            composable(Tab.ROUTE.route) { RouteScreen(state, onOpenMap = { nav.navigate("mapa") }) }
+            // Mapa em tela cheia (sem topbar/navegação inferior): rota inteira ou focado no meu ponto.
+            composable("mapa") { MapScreen(state, actions, MapFocus.WHOLE_ROUTE, onBack = { nav.popBackStack() }) }
+            composable("mapa-meu-ponto") { MapScreen(state, actions, MapFocus.MY_STOP, onBack = { nav.popBackStack() }) }
             composable(Tab.ALERTS.route) { AlertsScreen(state) }
             composable(Tab.PROFILE.route) {
                 ProfileScreen(
