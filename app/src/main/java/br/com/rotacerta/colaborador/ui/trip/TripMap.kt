@@ -3,6 +3,7 @@ package br.com.rotacerta.colaborador.ui.trip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import br.com.rotacerta.colaborador.data.decodePolylineCached
 import br.com.rotacerta.colaborador.data.model.LiveStatus
 import br.com.rotacerta.colaborador.data.model.PathProgress
 import br.com.rotacerta.colaborador.data.model.Trip
@@ -23,9 +24,14 @@ data class TripMapRequest(
 /** Ponto do trajeto em (latitude, longitude). */
 typealias GeoPoint = Pair<Double, Double>
 
-/** Trajeto considerado pelo backend: paradas em ordem + empresa no final. */
+/** Trajeto da rota: o enviado pelo backend (pelas ruas, quando disponível) ou a linha reta entre as paradas. */
 fun Trip.routePath(): List<GeoPoint> =
-    stops.map { it.latitude to it.longitude } + listOfNotNull(destination?.let { it.latitude to it.longitude })
+    path?.polyline?.takeIf { it.isNotEmpty() }?.let { decodePolylineCached(it) }?.takeIf { it.size >= 2 }
+        ?: (stops.map { it.latitude to it.longitude } + listOfNotNull(destination?.let { it.latitude to it.longitude }))
+
+/** Progresso da van, só se foi calculado sobre o mesmo trajeto que está sendo desenhado. */
+fun TripMapRequest.progress(): PathProgress? =
+    live?.pathProgress?.takeIf { it.pathVersion == null || trip.path?.version == null || it.pathVersion == trip.path.version }
 
 fun TripMapRequest.vanPosition(): GeoPoint? =
     live?.vehicle?.let { it.latitude to it.longitude } ?: trip.lastPosition?.let { it.latitude to it.longitude }

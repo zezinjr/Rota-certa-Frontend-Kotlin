@@ -37,6 +37,8 @@ O visual segue **as mesmas configurações do painel web Angular**: topbar `#1e4
   A van desliza entre as posições e gira para a direção em que está indo. O trecho já percorrido fica cinza,
   e a câmera acompanha a van até você mexer no mapa. Também mostra "minha localização" e a rota a pé
   até o ponto no app do Google Maps. Sem chave do Google Maps, o app usa um mapa esquemático.
+- **Trajeto pelas ruas**: com a chave da Routes API configurada no backend, a linha do mapa, o trecho
+  percorrido e a previsão seguem o caminho real de carro. Sem ela, o trajeto é a linha reta entre as paradas.
 - **Rota**: mapa + timeline das paradas com o seu ponto destacado.
 - **Alertas**: eventos da rota (saída, parada, atraso, ocorrência, chegada).
 - **Perfil**: dados do colaborador, alterar senha e sair.

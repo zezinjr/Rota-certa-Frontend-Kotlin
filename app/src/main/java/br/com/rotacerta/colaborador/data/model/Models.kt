@@ -86,6 +86,8 @@ data class Trip(
     @SerialName("my_stop") val myStop: StopInfo? = null,
     val stops: List<StopInfo> = emptyList(),
     val destination: AddressInfo? = null,
+    /** Trajeto calculado pelo backend: pelas ruas (Google) ou linha reta entre as paradas. */
+    val path: TripPath? = null,
     val schedules: List<ScheduleInfo> = emptyList(),
     @SerialName("last_position") val lastPosition: Position? = null,
     val events: List<TripEvent> = emptyList(),
@@ -180,9 +182,21 @@ data class LiveEta(
     @SerialName("stops_before") val stopsBefore: Int,
 )
 
-/** Onde a van está no trajeto (paradas → empresa): segmento e fração percorrida dele. */
+/** Trajeto da rota em polyline codificada (formato do Google, precisão 5). */
 @Serializable
-data class PathProgress(val segment: Int, val fraction: Double)
+data class TripPath(
+    val polyline: String,
+    val source: String = "straight",
+    val version: String? = null,
+)
+
+/** Onde a van está no trajeto: segmento e fração percorrida dele (no trajeto de versão [pathVersion]). */
+@Serializable
+data class PathProgress(
+    val segment: Int,
+    val fraction: Double,
+    @SerialName("path_version") val pathVersion: String? = null,
+)
 
 @Serializable
 enum class LivePhase {

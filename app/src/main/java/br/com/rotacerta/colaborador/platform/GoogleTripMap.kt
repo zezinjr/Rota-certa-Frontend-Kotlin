@@ -45,6 +45,7 @@ import br.com.rotacerta.colaborador.R
 import br.com.rotacerta.colaborador.ui.theme.RcColors
 import br.com.rotacerta.colaborador.ui.trip.MapFocus
 import br.com.rotacerta.colaborador.ui.trip.TripMapRequest
+import br.com.rotacerta.colaborador.ui.trip.progress
 import br.com.rotacerta.colaborador.ui.trip.routePath
 import br.com.rotacerta.colaborador.ui.trip.splitPath
 import br.com.rotacerta.colaborador.ui.trip.vanHeading
@@ -83,7 +84,8 @@ fun GoogleTripMap(request: TripMapRequest) {
     val van = request.vanPosition()?.let { LatLng(it.first, it.second) }
     val isLive = request.live?.isLive == true
     val myStop = trip.myStop?.let { LatLng(it.latitude, it.longitude) }
-    val allPoints = stops + listOfNotNull(destination, van)
+    // Enquadramento inclui o trajeto pelas ruas, que pode passar fora da área das paradas.
+    val allPoints = stops + listOfNotNull(destination, van) + trip.routePath().map { LatLng(it.first, it.second) }
 
     var hasLocation by remember { mutableStateOf(hasLocationPermission(context)) }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -149,7 +151,7 @@ fun GoogleTripMap(request: TripMapRequest) {
             onMapLoaded = { mapLoaded = true },
         ) {
             // Trajeto (paradas → empresa); trecho já percorrido pela van em cinza.
-            val (done, remaining) = splitPath(trip.routePath(), request.live?.pathProgress)
+            val (done, remaining) = splitPath(trip.routePath(), request.progress())
             listOf(done to RcColors.TextMuted, remaining to RcColors.Accent).forEach { (points, color) ->
                 if (points.size >= 2) {
                     Polyline(

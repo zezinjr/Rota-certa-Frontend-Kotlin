@@ -42,6 +42,7 @@ fun RouteMap(request: TripMapRequest) {
     val van = request.vanPosition()
     val textMeasurer = rememberTextMeasurer()
     val points = buildList {
+        addAll(trip.routePath())
         trip.stops.forEach { add(it.latitude to it.longitude) }
         trip.destination?.let { add(it.latitude to it.longitude) }
         van?.let { add(it) }
@@ -60,7 +61,7 @@ fun RouteMap(request: TripMapRequest) {
         val project = projector(points, size, padding = 28.dp.toPx())
 
         // Trajeto: paradas em ordem → empresa; trecho já percorrido pela van em cinza.
-        val (done, remaining) = splitPath(trip.routePath(), request.live?.pathProgress)
+        val (done, remaining) = splitPath(trip.routePath(), request.progress())
         fun pathOf(points: List<GeoPoint>) = Path().apply {
             points.forEachIndexed { i, p ->
                 val o = project(p)
