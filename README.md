@@ -31,11 +31,17 @@ O visual segue **as mesmas configurações do painel web Angular**: topbar `#1e4
 - **Minha viagem**: próxima saída (a partir dos horários da empresa) com contagem regressiva,
   status da rota (Aguardando / Em rota / Atrasado), ponto de embarque, veículo e motorista.
 - **Confirmação de embarque**: “Sim, vou” / “Não vou” / desfazer — o motorista vê no app dele.
-- **Rota**: mapa esquemático (sem SDK/chave de mapas) + timeline das paradas com o seu ponto destacado.
+- **Van ao vivo, estilo Uber**: card "Sua van está a caminho · ~6 min · 1 parada antes de você · 3,4 km"
+  na tela Viagem, que muda para "chegando", "já passou pelo seu ponto" e "chegou à empresa".
+- **Mapa (Google Maps dentro do app)**: paradas numeradas (seu ponto em amarelo), empresa e trajeto.
+  A van desliza entre as posições e gira para a direção em que está indo. O trecho já percorrido fica cinza,
+  e a câmera acompanha a van até você mexer no mapa. Também mostra "minha localização" e a rota a pé
+  até o ponto no app do Google Maps. Sem chave do Google Maps, o app usa um mapa esquemático.
+- **Rota**: mapa + timeline das paradas com o seu ponto destacado.
 - **Alertas**: eventos da rota (saída, parada, atraso, ocorrência, chegada).
 - **Perfil**: dados do colaborador, alterar senha e sair.
-- Atualização automática a cada 30 s, renovação automática do token (refresh) e
-  ações nativas: ligar para o motorista e abrir o ponto no app de mapas.
+- Atualização automática (viagens a cada 30 s, van a cada 5 s, só com o app aberto), renovação
+  automática do token (refresh) e ações nativas: ligar para o motorista e rota a pé no Google Maps.
 
 ## 🧱 Arquitetura
 
@@ -71,6 +77,7 @@ MVVM com `ViewModel` + `StateFlow`/Compose state, Navigation Compose e injeção
 | GET | `/api/me/` | Perfil do colaborador |
 | GET | `/api/me/trips/` | Minhas viagens (rota, ponto, motorista, horários, eventos) |
 | POST | `/api/me/trips/{id}/boarding/` | `{"status": "confirmed" \| "absent" \| "pending"}` |
+| GET | `/api/me/trips/{id}/live/` | Van ao vivo: posição, fase, previsão de chegada e paradas antes de você |
 
 Os endpoints `/api/me/*` exigem Bearer token de uma pessoa do tipo `EMPLOYEE`.
 
@@ -109,6 +116,18 @@ O mapa usa o **Maps SDK for Android** (biblioteca `maps-compose`). Exibir o mapa
 Para o APK gerado pelo GitHub Actions, cadastre o mesmo valor em **Settings → Secrets and variables → Actions → New repository secret** com o nome `MAPS_API_KEY`. Atenção: o certificado de debug do Actions muda a cada execução. Para esse APK, crie uma chave separada, restrita só às APIs, ou configure um certificado fixo.
 
 > Não reutilize a chave que aparece no `.env.example` do backend: ela ficou pública no GitHub e deve ser revogada.
+
+## 🚐 Testar a van ao vivo (simulador)
+
+Enquanto o app do motorista não envia o GPS, o backend tem um simulador que faz a van andar pelas paradas:
+
+1. Backend rodando: `python manage.py runserver 0.0.0.0:8000`.
+2. Em **outro terminal**, na pasta do backend:
+   ```bash
+   python manage.py simular_rota --email mne001@polodigitalmanaus.com --minutos 5
+   ```
+   Use o e-mail do colaborador logado no app.
+3. No app, a tela **Viagem** mostra o card "ao vivo". Toque em **Acompanhar no mapa** para ver a van andando.
 
 ## 📦 Baixar o APK pronto (GitHub Actions)
 
