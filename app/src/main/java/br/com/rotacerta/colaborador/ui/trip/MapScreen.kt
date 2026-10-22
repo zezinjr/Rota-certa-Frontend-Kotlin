@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.rotacerta.colaborador.data.model.LiveStatus
 import br.com.rotacerta.colaborador.data.model.Trip
 import br.com.rotacerta.colaborador.platform.PlatformActions
 import br.com.rotacerta.colaborador.ui.components.Badge
@@ -40,16 +42,16 @@ import br.com.rotacerta.colaborador.ui.theme.RcColors
 fun MapScreen(state: TripUiState, actions: PlatformActions, focus: MapFocus, onBack: () -> Unit) {
     val trip = state.selectedTrip
     when {
-        trip != null -> MapContent(trip, actions, focus, onBack)
+        trip != null -> MapContent(trip, state.selectedLive, actions, focus, onBack)
         state.loading -> LoadingState()
         else -> MessageState("Sem rota", "Você ainda não está vinculado a uma rota.", actionLabel = "Voltar", onAction = onBack)
     }
 }
 
 @Composable
-private fun MapContent(trip: Trip, actions: PlatformActions, focus: MapFocus, onBack: () -> Unit) {
+private fun MapContent(trip: Trip, live: LiveStatus?, actions: PlatformActions, focus: MapFocus, onBack: () -> Unit) {
     Box(Modifier.fillMaxSize().background(RcColors.Background)) {
-        LocalTripMap.current(TripMapRequest(trip, Modifier.fillMaxSize(), interactive = true, focus = focus))
+        LocalTripMap.current(TripMapRequest(trip, Modifier.fillMaxSize(), interactive = true, focus = focus, live = live))
 
         // Topo: voltar + nome/status da rota
         Row(
@@ -93,6 +95,17 @@ private fun MapContent(trip: Trip, actions: PlatformActions, focus: MapFocus, on
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                live?.let { liveHeadline(trip, it) }?.let { h ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LiveDot()
+                        Column(Modifier.padding(start = 10.dp).weight(1f)) {
+                            Text(h.title, color = RcColors.TextStrong, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            h.detail?.let { Text(it, color = RcColors.TextLabel, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        }
+                        h.highlight?.let { Text(it, color = h.accent, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+                    }
+                    HorizontalDivider(color = RcColors.Divider)
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier.size(28.dp).background(Color.White, CircleShape).padding(3.dp).background(RcColors.Warning, CircleShape),

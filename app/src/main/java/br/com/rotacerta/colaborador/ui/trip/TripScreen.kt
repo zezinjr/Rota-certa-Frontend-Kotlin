@@ -132,6 +132,8 @@ private fun TripContent(
             }
         }
 
+        state.selectedLive?.let { live -> LiveTripCard(trip, live, onOpenMap) }
+
         // .stats-grid (2 colunas no celular)
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(

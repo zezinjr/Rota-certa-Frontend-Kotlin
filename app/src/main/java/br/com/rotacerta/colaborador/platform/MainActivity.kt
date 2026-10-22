@@ -41,6 +41,16 @@ class MainActivity : ComponentActivity(), PlatformActions {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        (application as RotaCertaApp).container.appInForeground.value = true
+    }
+
+    override fun onStop() {
+        (application as RotaCertaApp).container.appInForeground.value = false
+        super.onStop()
+    }
+
     override fun dial(phone: String) {
         launch(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")))
     }

@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.rotacerta.colaborador.data.model.LiveStatus
 import br.com.rotacerta.colaborador.data.model.Trip
 import br.com.rotacerta.colaborador.ui.components.Badge
 import br.com.rotacerta.colaborador.ui.components.BadgeKind
@@ -46,23 +47,23 @@ import br.com.rotacerta.colaborador.ui.theme.RcColors
 fun RouteScreen(state: TripUiState, onOpenMap: () -> Unit) {
     val trip = state.selectedTrip
     when {
-        trip != null -> RouteContent(trip, onOpenMap)
+        trip != null -> RouteContent(trip, state.selectedLive, onOpenMap)
         state.loading -> LoadingState()
         else -> MessageState("Sem rota", "Você ainda não está vinculado a uma rota.")
     }
 }
 
 @Composable
-private fun RouteContent(trip: Trip, onOpenMap: () -> Unit) {
+private fun RouteContent(trip: Trip, live: LiveStatus?, onOpenMap: () -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PageHeader(trip.route.name, "${trip.stops.size} paradas · destino ${trip.company.name}")
 
-        Panel(title = "Mapa da rota", caption = trip.route.status.style().label) {
+        Panel(title = "Mapa da rota", caption = if (live?.isLive == true) "ao vivo" else trip.route.status.style().label) {
             Box(Modifier.clip(RoundedCornerShape(10.dp))) {
-                LocalTripMap.current(TripMapRequest(trip, Modifier.fillMaxWidth().height(240.dp), interactive = false))
+                LocalTripMap.current(TripMapRequest(trip, Modifier.fillMaxWidth().height(240.dp), interactive = false, live = live))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Legend(RcColors.Warning, "seu ponto")

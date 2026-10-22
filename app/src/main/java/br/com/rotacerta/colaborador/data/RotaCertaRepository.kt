@@ -4,6 +4,7 @@ import br.com.rotacerta.colaborador.data.model.BoardingRequest
 import br.com.rotacerta.colaborador.data.model.BoardingStatus
 import br.com.rotacerta.colaborador.data.model.ChangePasswordRequest
 import br.com.rotacerta.colaborador.data.model.EmployeeProfile
+import br.com.rotacerta.colaborador.data.model.LiveStatus
 import br.com.rotacerta.colaborador.data.model.LoginRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetResponse
@@ -45,6 +46,8 @@ class RotaCertaRepository(
     suspend fun profile(): Result<EmployeeProfile> = call { api.profile() }
 
     suspend fun trips(): Result<List<Trip>> = call { api.trips() }
+
+    suspend fun live(tripId: Long): Result<LiveStatus> = call { api.live(tripId) }
 
     suspend fun updateBoarding(tripId: Long, status: BoardingStatus): Result<Trip> = call {
         api.updateBoarding(tripId, BoardingRequest(status))

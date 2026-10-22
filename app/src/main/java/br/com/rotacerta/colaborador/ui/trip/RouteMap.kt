@@ -32,12 +32,19 @@ import kotlin.math.max
  * coordenadas reais das paradas. Sem SDK de mapas / chave de API.
  */
 @Composable
-fun RouteMap(trip: Trip, modifier: Modifier = Modifier.height(240.dp)) {
+fun RouteMap(trip: Trip, modifier: Modifier = Modifier.height(240.dp)) =
+    RouteMap(TripMapRequest(trip, modifier, interactive = false))
+
+@Composable
+fun RouteMap(request: TripMapRequest) {
+    val trip = request.trip
+    val modifier = request.modifier
+    val van = request.vanPosition()
     val textMeasurer = rememberTextMeasurer()
     val points = buildList {
         trip.stops.forEach { add(it.latitude to it.longitude) }
         trip.destination?.let { add(it.latitude to it.longitude) }
-        trip.lastPosition?.let { add(it.latitude to it.longitude) }
+        van?.let { add(it) }
     }
 
     Canvas(modifier.fillMaxWidth()) {
@@ -52,18 +59,17 @@ fun RouteMap(trip: Trip, modifier: Modifier = Modifier.height(240.dp)) {
 
         val project = projector(points, size, padding = 28.dp.toPx())
 
-        val path = Path()
-        val route = trip.stops.map { it.latitude to it.longitude } +
-            listOfNotNull(trip.destination?.let { it.latitude to it.longitude })
-        route.forEachIndexed { i, p ->
-            val o = project(p)
-            if (i == 0) path.moveTo(o.x, o.y) else path.lineTo(o.x, o.y)
+        // Trajeto: paradas em ordem → empresa; trecho já percorrido pela van em cinza.
+        val (done, remaining) = splitPath(trip.routePath(), request.live?.pathProgress)
+        fun pathOf(points: List<GeoPoint>) = Path().apply {
+            points.forEachIndexed { i, p ->
+                val o = project(p)
+                if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y)
+            }
         }
-        drawPath(
-            path,
-            RcColors.Accent,
-            style = Stroke(3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.cornerPathEffect(12f)),
-        )
+        val stroke = Stroke(3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.cornerPathEffect(12f))
+        if (done.size >= 2) drawPath(pathOf(done), RcColors.TextMuted, style = stroke)
+        if (remaining.size >= 2) drawPath(pathOf(remaining), RcColors.Accent, style = stroke)
 
         trip.stops.forEach { stop ->
             val o = project(stop.latitude to stop.longitude)
@@ -87,7 +93,7 @@ fun RouteMap(trip: Trip, modifier: Modifier = Modifier.height(240.dp)) {
             drawText(label, topLeft = Offset(o.x - label.size.width / 2f, o.y - label.size.height / 2f))
         }
 
-        trip.lastPosition?.let { drawVehicle(project(it.latitude to it.longitude)) }
+        van?.let { drawVehicle(project(it)) }
     }
 }
 

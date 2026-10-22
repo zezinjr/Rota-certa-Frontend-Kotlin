@@ -92,7 +92,7 @@ private enum class Tab(val route: String, val label: String, val icon: ImageVect
 
 @Composable
 private fun MainFlow(container: AppContainer, actions: PlatformActions, personId: Long) {
-    val tripViewModel: TripViewModel = viewModel(key = "trips-$personId") { TripViewModel(container.repository) }
+    val tripViewModel: TripViewModel = viewModel(key = "trips-$personId") { TripViewModel(container.repository, container.appInForeground) }
     val state by tripViewModel.state.collectAsState()
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()

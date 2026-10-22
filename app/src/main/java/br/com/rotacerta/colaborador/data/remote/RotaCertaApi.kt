@@ -4,6 +4,7 @@ import br.com.rotacerta.colaborador.data.model.AuthResponse
 import br.com.rotacerta.colaborador.data.model.BoardingRequest
 import br.com.rotacerta.colaborador.data.model.ChangePasswordRequest
 import br.com.rotacerta.colaborador.data.model.EmployeeProfile
+import br.com.rotacerta.colaborador.data.model.LiveStatus
 import br.com.rotacerta.colaborador.data.model.LoginRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetResponse
@@ -39,6 +40,9 @@ interface RotaCertaApi {
 
     @GET("me/trips/")
     suspend fun trips(): List<Trip>
+
+    @GET("me/trips/{id}/live/")
+    suspend fun live(@Path("id") tripId: Long): LiveStatus
 
     @POST("me/trips/{id}/boarding/")
     suspend fun updateBoarding(@Path("id") tripId: Long, @Body body: BoardingRequest): Trip

@@ -150,3 +150,45 @@ enum class RouteStatus {
     @SerialName("in_route") IN_ROUTE,
     @SerialName("delayed") DELAYED,
 }
+
+// ---- Acompanhamento ao vivo (/api/me/trips/{id}/live/) ----
+
+@Serializable
+data class LiveStatus(
+    @SerialName("trip_id") val tripId: Long,
+    @SerialName("is_live") val isLive: Boolean = false,
+    val phase: LivePhase = LivePhase.WAITING,
+    val vehicle: LiveVehicle? = null,
+    val eta: LiveEta? = null,
+    @SerialName("next_stop_sequence") val nextStopSequence: Int? = null,
+    @SerialName("path_progress") val pathProgress: PathProgress? = null,
+)
+
+@Serializable
+data class LiveVehicle(
+    val latitude: Double,
+    val longitude: Double,
+    val heading: Double? = null,
+    val speed: Double? = null,
+    @SerialName("age_seconds") val ageSeconds: Int = 0,
+)
+
+@Serializable
+data class LiveEta(
+    val minutes: Int,
+    @SerialName("distance_meters") val distanceMeters: Int,
+    @SerialName("stops_before") val stopsBefore: Int,
+)
+
+/** Onde a van está no trajeto (paradas → empresa): segmento e fração percorrida dele. */
+@Serializable
+data class PathProgress(val segment: Int, val fraction: Double)
+
+@Serializable
+enum class LivePhase {
+    @SerialName("waiting") WAITING,
+    @SerialName("approaching") APPROACHING,
+    @SerialName("arriving") ARRIVING,
+    @SerialName("passed") PASSED,
+    @SerialName("at_destination") AT_DESTINATION,
+}
