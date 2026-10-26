@@ -157,6 +157,8 @@ private fun MainFlow(container: AppContainer, actions: PlatformActions, personId
                 ProfileScreen(
                     profile = state.profile,
                     error = state.profileError,
+                    updatingWhatsapp = state.updatingWhatsapp,
+                    onWhatsappChange = tripViewModel::setWhatsappOptIn,
                     onRetry = tripViewModel::loadProfile,
                     onChangePassword = { nav.navigate("alterar-senha") },
                     onLogout = tripViewModel::logout,

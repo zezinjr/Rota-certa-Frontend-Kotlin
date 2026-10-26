@@ -8,12 +8,14 @@ import br.com.rotacerta.colaborador.data.model.LiveStatus
 import br.com.rotacerta.colaborador.data.model.LoginRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetResponse
+import br.com.rotacerta.colaborador.data.model.PreferencesRequest
 import br.com.rotacerta.colaborador.data.model.RefreshRequest
 import br.com.rotacerta.colaborador.data.model.RefreshResponse
 import br.com.rotacerta.colaborador.data.model.Trip
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -37,6 +39,9 @@ interface RotaCertaApi {
 
     @GET("me/")
     suspend fun profile(): EmployeeProfile
+
+    @PATCH("me/")
+    suspend fun updatePreferences(@Body body: PreferencesRequest): EmployeeProfile
 
     @GET("me/trips/")
     suspend fun trips(): List<Trip>

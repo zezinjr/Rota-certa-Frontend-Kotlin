@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
@@ -16,6 +17,8 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +47,8 @@ import br.com.rotacerta.colaborador.ui.theme.RcColors
 fun ProfileScreen(
     profile: EmployeeProfile?,
     error: String?,
+    updatingWhatsapp: Boolean,
+    onWhatsappChange: (Boolean) -> Unit,
     onRetry: () -> Unit,
     onChangePassword: () -> Unit,
     onLogout: () -> Unit,
@@ -59,7 +64,7 @@ fun ProfileScreen(
         )
     }
     when {
-        profile != null -> ProfileContent(profile, onChangePassword) { confirmLogout = true }
+        profile != null -> ProfileContent(profile, updatingWhatsapp, onWhatsappChange, onChangePassword) { confirmLogout = true }
         // Mesmo sem perfil, o usuário precisa conseguir tentar de novo ou sair.
         error != null -> Column(
             Modifier.fillMaxSize().padding(16.dp),
@@ -80,7 +85,13 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileContent(profile: EmployeeProfile, onChangePassword: () -> Unit, onLogoutClick: () -> Unit) {
+private fun ProfileContent(
+    profile: EmployeeProfile,
+    updatingWhatsapp: Boolean,
+    onWhatsappChange: (Boolean) -> Unit,
+    onChangePassword: () -> Unit,
+    onLogoutClick: () -> Unit,
+) {
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -103,6 +114,7 @@ private fun ProfileContent(profile: EmployeeProfile, onChangePassword: () -> Uni
             InfoRow(Icons.Filled.Business, "Empresa", profile.companyName)
             profile.homeAddress?.label?.let { InfoRow(Icons.Filled.Home, "Endereço", it) }
         }
+        WhatsappPanel(profile, updatingWhatsapp, onWhatsappChange)
         Text(
             "Dados incorretos? Procure o RH ou a gestão de transporte da empresa.",
             color = RcColors.TextMuted,
@@ -110,5 +122,43 @@ private fun ProfileContent(profile: EmployeeProfile, onChangePassword: () -> Uni
         )
         RcStrokedButton("Alterar senha", onChangePassword, Modifier.fillMaxWidth(), icon = Icons.Filled.Lock)
         RcButton("Sair da conta", onLogoutClick, Modifier.fillMaxWidth(), icon = Icons.AutoMirrored.Filled.Logout, color = RcColors.MatWarn)
+    }
+}
+
+/** Consentimento para os avisos da van pelo WhatsApp (o colaborador liga e desliga quando quiser). */
+@Composable
+private fun WhatsappPanel(profile: EmployeeProfile, updating: Boolean, onChange: (Boolean) -> Unit) {
+    // Mesmo indisponível no servidor, quem já ativou precisa conseguir desativar.
+    val canToggle = (profile.whatsappAvailable || profile.whatsappOptIn) && !updating
+    Panel(title = "Avisos") {
+        InfoRow(
+            Icons.AutoMirrored.Filled.Chat,
+            "WhatsApp",
+            if (profile.whatsappOptIn) "Ativado" else "Desativado",
+        ) {
+            Switch(
+                checked = profile.whatsappOptIn,
+                onCheckedChange = onChange,
+                enabled = canToggle,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = RcColors.White,
+                    checkedTrackColor = RcColors.Accent,
+                    uncheckedThumbColor = RcColors.TextLabel,
+                    uncheckedTrackColor = RcColors.Background,
+                    uncheckedBorderColor = RcColors.Divider,
+                ),
+            )
+        }
+        Text(
+            if (profile.whatsappAvailable || profile.whatsappOptIn) {
+                "Receba no WhatsApp (${profile.phone}) quando a van estiver a poucos minutos e chegando ao seu ponto. " +
+                    "Ao ativar, você autoriza essas mensagens e pode desativar quando quiser."
+            } else {
+                "Os avisos pelo WhatsApp ainda não estão disponíveis para a sua conta. " +
+                    "Confira se o telefone do cadastro está correto ou fale com a gestão de transporte."
+            },
+            color = RcColors.TextMuted,
+            fontSize = 13.sp,
+        )
     }
 }

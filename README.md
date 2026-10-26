@@ -42,6 +42,9 @@ O visual segue **as mesmas configurações do painel web Angular**: topbar `#1e4
 - **Rota**: mapa + timeline das paradas com o seu ponto destacado.
 - **Alertas**: eventos da rota (saída, parada, atraso, ocorrência, chegada).
 - **Perfil**: dados do colaborador, alterar senha e sair.
+- **Avisos pelo WhatsApp**: no Perfil, o colaborador ativa (ou desativa) as mensagens "a van está a poucos minutos"
+  e "a van está chegando". O envio é feito pelo backend (ver "Avisos pelo WhatsApp" no README do backend);
+  o interruptor fica desabilitado enquanto o servidor não tiver o WhatsApp configurado.
 - Atualização automática (viagens a cada 30 s, van a cada 5 s, só com o app aberto), renovação
   automática do token (refresh) e ações nativas: ligar para o motorista e rota a pé no Google Maps.
 
@@ -77,6 +80,7 @@ MVVM com `ViewModel` + `StateFlow`/Compose state, Navigation Compose e injeção
 | POST | `/api/auth/change-password/` | Primeiro acesso / alterar senha |
 | POST | `/api/auth/password-reset/request/` · `reset/` | Recuperar senha |
 | GET | `/api/me/` | Perfil do colaborador |
+| PATCH | `/api/me/` | `{"whatsapp_opt_in": true \| false}`: ativa ou desativa os avisos pelo WhatsApp |
 | GET | `/api/me/trips/` | Minhas viagens (rota, ponto, motorista, horários, eventos) |
 | POST | `/api/me/trips/{id}/boarding/` | `{"status": "confirmed" \| "absent" \| "pending"}` |
 | GET | `/api/me/trips/{id}/live/` | Van ao vivo: posição, fase, previsão de chegada e paradas antes de você |

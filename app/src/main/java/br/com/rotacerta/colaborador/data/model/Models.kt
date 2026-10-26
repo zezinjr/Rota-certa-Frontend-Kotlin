@@ -73,7 +73,14 @@ data class EmployeeProfile(
     @SerialName("company_id") val companyId: Long,
     @SerialName("company_name") val companyName: String,
     @SerialName("home_address") val homeAddress: AddressInfo? = null,
+    /** O colaborador aceitou receber os avisos da van pelo WhatsApp. */
+    @SerialName("whatsapp_opt_in") val whatsappOptIn: Boolean = false,
+    /** O servidor tem o WhatsApp configurado e o telefone do cadastro é válido. */
+    @SerialName("whatsapp_available") val whatsappAvailable: Boolean = false,
 )
+
+@Serializable
+data class PreferencesRequest(@SerialName("whatsapp_opt_in") val whatsappOptIn: Boolean)
 
 @Serializable
 data class Trip(

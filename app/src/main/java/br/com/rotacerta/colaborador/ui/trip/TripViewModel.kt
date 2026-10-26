@@ -26,6 +26,7 @@ data class TripUiState(
     val lastUpdated: LocalTime? = null,
     val profile: EmployeeProfile? = null,
     val profileError: String? = null,
+    val updatingWhatsapp: Boolean = false,
     /** Posição da van e previsão da viagem selecionada (atualiza a cada poucos segundos). */
     val live: LiveStatus? = null,
 ) {
@@ -95,6 +96,24 @@ class TripViewModel(
             repository.profile()
                 .onSuccess { p -> _state.update { it.copy(profile = p, profileError = null) } }
                 .onFailure { e -> _state.update { it.copy(profileError = e.message ?: "Erro ao carregar o perfil.") } }
+        }
+    }
+
+    fun setWhatsappOptIn(enabled: Boolean) {
+        if (_state.value.updatingWhatsapp) return
+        _state.update { it.copy(updatingWhatsapp = true) }
+        viewModelScope.launch {
+            repository.setWhatsappOptIn(enabled)
+                .onSuccess { p ->
+                    _state.update {
+                        it.copy(
+                            profile = p,
+                            updatingWhatsapp = false,
+                            message = if (p.whatsappOptIn) "Avisos pelo WhatsApp ativados." else "Avisos pelo WhatsApp desativados.",
+                        )
+                    }
+                }
+                .onFailure { e -> _state.update { it.copy(updatingWhatsapp = false, message = e.message) } }
         }
     }
 
