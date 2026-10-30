@@ -4,6 +4,10 @@ Protótipo do aplicativo **Android nativo** para os **colaboradores** (passageir
 feito em **Kotlin + Jetpack Compose (Material 3)** e consumindo a API do
 [backend Django](https://github.com/zezinjr/Rota-certa-Backend-Django).
 
+> Este repositório contém só o app Android. Ele foi separado da pasta `mobile/colaborador-android`
+> do [Rota-certa-Frontend-Angular](https://github.com/zezinjr/Rota-certa-Frontend-Angular),
+> mantendo o histórico de commits do app.
+
 O visual segue **as mesmas configurações do painel web Angular**: topbar `#1e40af` com o logo
 “Rotacerta”, layout escuro `#0f172a` com painéis `#1e2937`, badges, botões do tema Material
 `indigo-pink`, Roboto e Material Icons. A tabela completa de tokens está em
@@ -99,7 +103,7 @@ Os endpoints `/api/me/*` exigem Bearer token de uma pessoa do tipo `EMPLOYEE`.
    python manage.py seed_manaus_demo
    python manage.py runserver 0.0.0.0:8000
    ```
-2. **App**: abra `mobile/colaborador-android` no **Android Studio** (Ladybug ou mais novo, JDK 17+)
+2. **App**: abra a pasta deste repositório no **Android Studio** (Ladybug ou mais novo, JDK 17+)
    e rode no emulador. A URL padrão é `http://10.0.2.2:8000/api/` (o localhost do PC visto pelo emulador).
    Em celular físico, toque na **engrenagem** da tela de login e informe
    `http://IP-DO-PC:8000/api/` (mesma rede Wi-Fi).
@@ -137,8 +141,8 @@ Enquanto o app do motorista não envia o GPS, o backend tem um simulador que faz
 
 ## 📦 Baixar o APK pronto (GitHub Actions)
 
-O workflow [`android-apk.yml`](../../.github/workflows/android-apk.yml) gera o APK de debug a cada
-push/PR que altere `mobile/colaborador-android/`.
+O workflow [`android-apk.yml`](.github/workflows/android-apk.yml) gera o APK de debug a cada
+push na `main` e a cada pull request.
 
 1. No GitHub, abra **Actions → Android APK** e clique na execução mais recente (verde).
 2. Em **Artifacts**, baixe `rota-certa-colaborador-debug` (um .zip com o `app-debug.apk`).

@@ -1,0 +1,64 @@
+name: Android APK
+
+# Gera o APK de debug do app do colaborador.
+# O APK fica disponível em "Artifacts" na página de cada execução.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "URL da API embutida no APK (ex.: http://192.168.0.10:8000/api/). Vazio = emulador (10.0.2.2)."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Cache do Gradle + validação do gradle-wrapper.jar
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Gerar APK (debug)
+        env:
+          API_BASE_URL: ${{ github.event.inputs.api_base_url }}
+          # Chave do Google Maps (Settings → Secrets → Actions → MAPS_API_KEY).
+          # Sem o secret, o APK usa o mapa esquemático no lugar do Google Maps.
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: |
+          ARGS=""
+          if [ -n "$API_BASE_URL" ]; then
+            ARGS="-PapiBaseUrl=$API_BASE_URL"
+            echo "URL da API: $API_BASE_URL"
+          fi
+          ./gradlew assembleDebug $ARGS --stacktrace
+
+      - name: Testes unitários
+        run: ./gradlew testDebugUnitTest
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: rota-certa-colaborador-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
