@@ -12,4 +12,7 @@ class AppContainer(store: SessionStore, defaultServerUrl: String, debugLogging: 
 
     /** App visível na tela? A MainActivity atualiza; as consultas periódicas pausam em segundo plano. */
     val appInForeground = MutableStateFlow(true)
+
+    /** Envio do GPS do motorista (o serviço em segundo plano atualiza; a tela observa). */
+    val tracking = MutableStateFlow(TrackingState())
 }

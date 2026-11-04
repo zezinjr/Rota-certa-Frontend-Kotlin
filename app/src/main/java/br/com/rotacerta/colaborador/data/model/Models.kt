@@ -213,3 +213,60 @@ enum class LivePhase {
     @SerialName("passed") PASSED,
     @SerialName("at_destination") AT_DESTINATION,
 }
+
+// ---- Motorista (/api/routes/my-routes/, /api/routes/{id}/location/, /api/route-events/) ----
+
+@Serializable
+data class DriverStop(
+    val id: Long,
+    val sequence: Int,
+    val title: String,
+    val subtitle: String? = null,
+    @SerialName("passenger_count") val passengerCount: Int = 0,
+)
+
+@Serializable
+data class DriverPassenger(
+    val id: Long,
+    val name: String,
+    val point: String,
+    val status: BoardingStatus = BoardingStatus.PENDING,
+    @SerialName("route_stop_id") val routeStopId: Long? = null,
+)
+
+@Serializable
+data class DriverVehicle(
+    val id: Long,
+    @SerialName("plate_number") val plateNumber: String,
+    val model: String? = null,
+)
+
+@Serializable
+data class DriverRoute(
+    val id: Long,
+    val name: String,
+    @SerialName("company_name") val companyName: String,
+    val vehicle: DriverVehicle? = null,
+    @SerialName("route_status") val routeStatus: RouteStatus = RouteStatus.WAITING,
+    val stops: List<DriverStop> = emptyList(),
+    val passengers: List<DriverPassenger> = emptyList(),
+)
+
+/** Coordenadas como texto com 6 casas: o backend aceita no máximo 6 casas decimais. */
+@Serializable
+data class LocationRequest(
+    val latitude: String,
+    val longitude: String,
+    val heading: Double? = null,
+    val speed: Double? = null,
+    @SerialName("recorded_at") val recordedAt: String? = null,
+)
+
+@Serializable
+data class RouteEventRequest(
+    val route: Long,
+    @SerialName("event_type") val eventType: String,
+    val description: String,
+    val latitude: String,
+    val longitude: String,
+)

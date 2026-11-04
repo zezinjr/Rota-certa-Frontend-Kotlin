@@ -1,7 +1,7 @@
-# 📱 Rota Certa — App do Colaborador (Android / Kotlin)
+# 📱 Rota Certa — App Android (Kotlin): colaborador e motorista
 
-Protótipo do aplicativo **Android nativo** para os **colaboradores** (passageiros do fretado),
-feito em **Kotlin + Jetpack Compose (Material 3)** e consumindo a API do
+Aplicativo **Android nativo** do fretado, com uma área para cada perfil: o **colaborador** (passageiro)
+acompanha a van e o **motorista** inicia a rota e envia a localização. Feito em **Kotlin + Jetpack Compose (Material 3)** e consumindo a API do
 [backend Django](https://github.com/zezinjr/Rota-certa-Backend-Django).
 
 > Este repositório contém só o app Android. Ele foi separado da pasta `mobile/colaborador-android`
@@ -27,7 +27,23 @@ O visual segue **as mesmas configurações do painel web Angular**: topbar `#1e4
 > rodando localmente com o seed `seed_manaus_demo` (renderização desktop com fonte DejaVu;
 > no Android a fonte é Roboto, como no painel).
 
-## ✨ Funcionalidades
+## 👥 Um app, dois perfis
+
+O login decide a área:
+
+| Quem entra | Abas | O que faz |
+|---|---|---|
+| Colaborador (`EMPLOYEE`) | Viagem · Rota · Alertas · Perfil | Acompanha a van ao vivo, confirma o embarque e ativa os avisos pelo WhatsApp |
+| Motorista (`DRIVER`) | Rota · Passageiros · Perfil | Escolhe a rota, toca em **Iniciar rota** e o app envia o GPS a cada 5 s; vê quem confirmou o embarque |
+| Gestor (`MANAGER`) | — | O app avisa que o gestor usa o painel web |
+
+**Motorista:** ao iniciar a rota, o app pede a permissão de localização (e de notificação, no Android 13+),
+registra a saída e envia a posição a cada 5 s por um **serviço em primeiro plano**, com uma notificação fixa
+"Rota em andamento". Assim o envio continua com a tela apagada ou com outro app aberto, o que a página
+`/rastreamento/` no navegador não consegue. **Encerrar rota** (no app ou na própria notificação) registra a
+chegada e para o envio. A página web continua existindo como alternativa.
+
+## ✨ Funcionalidades do colaborador
 
 - **Login** com e-mail corporativo (`matrícula@domínio-da-empresa`) e senha — JWT do backend.
 - **Primeiro acesso**: troca de senha obrigatória quando `must_change_password = true`.
@@ -89,7 +105,11 @@ MVVM com `ViewModel` + `StateFlow`/Compose state, Navigation Compose e injeção
 | POST | `/api/me/trips/{id}/boarding/` | `{"status": "confirmed" \| "absent" \| "pending"}` |
 | GET | `/api/me/trips/{id}/live/` | Van ao vivo: posição, fase, previsão de chegada e paradas antes de você |
 
-Os endpoints `/api/me/*` exigem Bearer token de uma pessoa do tipo `EMPLOYEE`.
+| GET | `/api/routes/my-routes/` | Motorista: rotas do dia, paradas e passageiros com a confirmação de embarque |
+| POST | `/api/routes/{id}/location/` | Motorista: posição a cada 5 s (`latitude`, `longitude`, `heading`, `speed`, `recorded_at`) |
+| POST | `/api/route-events/` | Motorista: saída ao iniciar e chegada ao encerrar a rota |
+
+Os endpoints `/api/me/*` exigem Bearer token de uma pessoa do tipo `EMPLOYEE`; os do motorista, do tipo `DRIVER`.
 
 ## ▶️ Como rodar
 

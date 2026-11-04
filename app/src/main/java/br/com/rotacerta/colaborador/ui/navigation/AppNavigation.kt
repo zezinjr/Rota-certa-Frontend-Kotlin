@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Route
@@ -30,10 +31,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import br.com.rotacerta.colaborador.data.AppContainer
+import br.com.rotacerta.colaborador.data.PersonType
+import br.com.rotacerta.colaborador.data.model.PersonBrief
 import br.com.rotacerta.colaborador.data.session.SessionState
 import br.com.rotacerta.colaborador.platform.PlatformActions
 import br.com.rotacerta.colaborador.ui.components.MenuItem
 import br.com.rotacerta.colaborador.ui.components.RcTopBar
+import br.com.rotacerta.colaborador.ui.driver.DriverPassengersScreen
+import br.com.rotacerta.colaborador.ui.driver.DriverProfileScreen
+import br.com.rotacerta.colaborador.ui.driver.DriverRouteScreen
+import br.com.rotacerta.colaborador.ui.driver.DriverViewModel
 import br.com.rotacerta.colaborador.ui.login.ChangePasswordScreen
 import br.com.rotacerta.colaborador.ui.login.ChangePasswordViewModel
 import br.com.rotacerta.colaborador.ui.login.ForgotPasswordScreen
@@ -59,7 +66,10 @@ fun RotaCertaRoot(container: AppContainer, actions: PlatformActions) {
             viewModel = viewModel(key = "forced-${s.person.id}") { ChangePasswordViewModel(container.repository) },
             forced = true,
         )
-        is SessionState.LoggedIn -> MainFlow(container, actions, s.person.id)
+        // Um app só: a área muda conforme o perfil de quem entrou.
+        is SessionState.LoggedIn ->
+            if (s.person.type == PersonType.DRIVER) DriverFlow(container, actions, s.person)
+            else MainFlow(container, actions, s.person.id)
     }
 }
 
@@ -165,6 +175,89 @@ private fun MainFlow(container: AppContainer, actions: PlatformActions, personId
                 )
             }
             composable("alterar-senha") {
+                ChangePasswordScreen(
+                    viewModel = viewModel { ChangePasswordViewModel(container.repository) },
+                    forced = false,
+                    onBack = { nav.popBackStack() },
+                    onDone = { nav.popBackStack() },
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- Área do motorista
+
+private enum class DriverTab(val route: String, val label: String, val icon: ImageVector) {
+    ROUTE("motorista-rota", "Rota", Icons.Filled.DirectionsBus),
+    PASSENGERS("motorista-passageiros", "Passageiros", Icons.Filled.Groups),
+    PROFILE("motorista-perfil", "Perfil", Icons.Filled.Person),
+}
+
+@Composable
+private fun DriverFlow(container: AppContainer, actions: PlatformActions, person: PersonBrief) {
+    val driverViewModel: DriverViewModel = viewModel(key = "driver-${person.id}") {
+        DriverViewModel(container.repository, container.tracking, container.appInForeground)
+    }
+    val state by driverViewModel.state.collectAsState()
+    val tracking by driverViewModel.tracking.collectAsState()
+    val nav = rememberNavController()
+    val backStack by nav.currentBackStackEntryAsState()
+    val current = backStack?.destination?.route
+
+    fun go(route: String) = nav.navigate(route) {
+        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+
+    Scaffold(
+        containerColor = RcColors.Background,
+        topBar = {
+            if (DriverTab.entries.any { it.route == current }) {
+                RcTopBar(userName = person.name.substringBefore(' '), userRole = "Motorista")
+            }
+        },
+        bottomBar = {
+            if (DriverTab.entries.any { it.route == current }) {
+                Column(Modifier.background(RcColors.Background)) {
+                    HorizontalDivider(color = RcColors.Panel, thickness = 1.dp)
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        DriverTab.entries.forEach { tab ->
+                            MenuItem(tab.icon, tab.label, current == tab.route, { go(tab.route) }, Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        },
+    ) { padding ->
+        NavHost(nav, startDestination = DriverTab.ROUTE.route, modifier = Modifier.padding(padding)) {
+            composable(DriverTab.ROUTE.route) {
+                DriverRouteScreen(
+                    state = state,
+                    tracking = tracking,
+                    onRefresh = { driverViewModel.refresh() },
+                    onSelectRoute = driverViewModel::selectRoute,
+                    onConsent = driverViewModel::setConsent,
+                    onStart = { route -> actions.startTracking(route.id, route.name) },
+                    onStop = actions::stopTracking,
+                )
+            }
+            composable(DriverTab.PASSENGERS.route) { DriverPassengersScreen(state, onRefresh = { driverViewModel.refresh() }) }
+            composable(DriverTab.PROFILE.route) {
+                DriverProfileScreen(
+                    person = person,
+                    onChangePassword = { nav.navigate("motorista-alterar-senha") },
+                    onLogout = {
+                        if (tracking.active) actions.stopTracking()
+                        driverViewModel.logout()
+                    },
+                )
+            }
+            composable("motorista-alterar-senha") {
                 ChangePasswordScreen(
                     viewModel = viewModel { ChangePasswordViewModel(container.repository) },
                     forced = false,

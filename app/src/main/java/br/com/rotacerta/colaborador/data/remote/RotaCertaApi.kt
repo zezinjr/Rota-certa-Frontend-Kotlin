@@ -3,14 +3,17 @@ package br.com.rotacerta.colaborador.data.remote
 import br.com.rotacerta.colaborador.data.model.AuthResponse
 import br.com.rotacerta.colaborador.data.model.BoardingRequest
 import br.com.rotacerta.colaborador.data.model.ChangePasswordRequest
+import br.com.rotacerta.colaborador.data.model.DriverRoute
 import br.com.rotacerta.colaborador.data.model.EmployeeProfile
 import br.com.rotacerta.colaborador.data.model.LiveStatus
+import br.com.rotacerta.colaborador.data.model.LocationRequest
 import br.com.rotacerta.colaborador.data.model.LoginRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetResponse
 import br.com.rotacerta.colaborador.data.model.PreferencesRequest
 import br.com.rotacerta.colaborador.data.model.RefreshRequest
 import br.com.rotacerta.colaborador.data.model.RefreshResponse
+import br.com.rotacerta.colaborador.data.model.RouteEventRequest
 import br.com.rotacerta.colaborador.data.model.Trip
 import retrofit2.Call
 import retrofit2.http.Body
@@ -51,4 +54,15 @@ interface RotaCertaApi {
 
     @POST("me/trips/{id}/boarding/")
     suspend fun updateBoarding(@Path("id") tripId: Long, @Body body: BoardingRequest): Trip
+
+    // ---- Motorista
+
+    @GET("routes/my-routes/")
+    suspend fun myRoutes(): List<DriverRoute>
+
+    @POST("routes/{id}/location/")
+    suspend fun sendLocation(@Path("id") routeId: Long, @Body body: LocationRequest): Unit
+
+    @POST("route-events/")
+    suspend fun createRouteEvent(@Body body: RouteEventRequest): Unit
 }

@@ -3,19 +3,31 @@ package br.com.rotacerta.colaborador.data
 import br.com.rotacerta.colaborador.data.model.BoardingRequest
 import br.com.rotacerta.colaborador.data.model.BoardingStatus
 import br.com.rotacerta.colaborador.data.model.ChangePasswordRequest
+import br.com.rotacerta.colaborador.data.model.DriverRoute
 import br.com.rotacerta.colaborador.data.model.EmployeeProfile
 import br.com.rotacerta.colaborador.data.model.PreferencesRequest
 import br.com.rotacerta.colaborador.data.model.LiveStatus
+import br.com.rotacerta.colaborador.data.model.LocationRequest
 import br.com.rotacerta.colaborador.data.model.LoginRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetRequest
 import br.com.rotacerta.colaborador.data.model.PasswordResetResponse
+import br.com.rotacerta.colaborador.data.model.RouteEventRequest
 import br.com.rotacerta.colaborador.data.model.Trip
 import br.com.rotacerta.colaborador.data.remote.RotaCertaApi
 import br.com.rotacerta.colaborador.data.remote.toUserMessage
 import br.com.rotacerta.colaborador.data.session.SessionManager
 import kotlinx.coroutines.CancellationException
+import java.time.Instant
+import java.util.Locale
 
 class AppException(message: String) : Exception(message)
+
+object PersonType {
+    const val EMPLOYEE = "EMPLOYEE"
+    const val DRIVER = "DRIVER"
+}
+
+private fun Double.coordinate(): String = String.format(Locale.US, "%.6f", this)
 
 class RotaCertaRepository(
     private val api: RotaCertaApi,
@@ -23,8 +35,9 @@ class RotaCertaRepository(
 ) {
     suspend fun login(email: String, password: String): Result<Unit> = call {
         val auth = api.login(LoginRequest(email.trim().lowercase(), password))
-        if (auth.person.type != "EMPLOYEE") {
-            throw AppException("Este app é exclusivo para colaboradores. Motoristas usam o app do motorista.")
+        // Colaborador e motorista usam este app, cada um com a sua área; o gestor usa o painel web.
+        if (auth.person.type != PersonType.EMPLOYEE && auth.person.type != PersonType.DRIVER) {
+            throw AppException("Gestores acessam o Rota Certa pelo painel web, no computador.")
         }
         session.onAuthenticated(auth)
     }
@@ -56,6 +69,27 @@ class RotaCertaRepository(
 
     suspend fun updateBoarding(tripId: Long, status: BoardingStatus): Result<Trip> = call {
         api.updateBoarding(tripId, BoardingRequest(status))
+    }
+
+    // ---- Motorista
+
+    suspend fun myRoutes(): Result<List<DriverRoute>> = call { api.myRoutes() }
+
+    suspend fun sendLocation(routeId: Long, fix: GpsFix): Result<Unit> = call {
+        api.sendLocation(
+            routeId,
+            LocationRequest(
+                latitude = fix.latitude.coordinate(),
+                longitude = fix.longitude.coordinate(),
+                heading = fix.heading,
+                speed = fix.speedMps,
+                recordedAt = Instant.ofEpochMilli(fix.timeMillis).toString(),
+            ),
+        )
+    }
+
+    suspend fun routeEvent(routeId: Long, type: String, description: String, fix: GpsFix): Result<Unit> = call {
+        api.createRouteEvent(RouteEventRequest(routeId, type, description, fix.latitude.coordinate(), fix.longitude.coordinate()))
     }
 
     fun logout() = session.logout()

@@ -55,9 +55,9 @@ fun LoginScreen(viewModel: LoginViewModel, onForgotPassword: () -> Unit) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 12.dp)) {
                 Column(Modifier.weight(1f)) {
-                    Text("App do colaborador", color = RcColors.TextStrong, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("Bem-vindo", color = RcColors.TextStrong, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                     Text(
-                        "Acompanhe o seu fretado, do ponto de embarque até a empresa.",
+                        "Colaborador: acompanhe a van até o seu ponto. Motorista: inicie a rota e compartilhe a localização.",
                         color = RcColors.TextMenu,
                         fontSize = 16.sp,
                         modifier = Modifier.padding(top = 8.dp),
