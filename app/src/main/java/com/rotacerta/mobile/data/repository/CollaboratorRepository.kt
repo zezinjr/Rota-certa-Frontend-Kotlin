@@ -67,8 +67,11 @@ class CollaboratorRepository @Inject constructor(
 
     private fun apply(event: RealtimeEvent) {
         when (event) {
-            is RealtimeEvent.VehicleLocation -> updateItems { item ->
-                if (item.route.id == event.location.routeId) item.copy(lastLocation = event.location) else item
+            is RealtimeEvent.VehicleLocation -> {
+                updateItems { item ->
+                    if (item.route.id == event.location.routeId) item.copy(lastLocation = event.location) else item
+                }
+                refreshEta(event.location.routeId)
             }
             is RealtimeEvent.RouteEventOccurred -> updateItems { item ->
                 if (item.route.id == event.routeId) item.copy(route = item.route.copy(routeStatus = event.routeStatus)) else item
@@ -81,6 +84,19 @@ class CollaboratorRepository @Inject constructor(
             // Ponto de embarque mudou (regra de proximidade aplicada pelo gestor): recarrega a rota.
             is RealtimeEvent.NotificationReceived ->
                 if (event.notification.kind == NotificationKind.PICKUP_CHANGED) scope.launch { refresh() }
+        }
+    }
+
+    /** Busca no backend a previsão pelo trajeto das ruas (o WebSocket só traz a posição do ônibus). */
+    private fun refreshEta(routeId: Long) {
+        val items = (_routes.value as? UiState.Success)?.data.orEmpty().filter { it.route.id == routeId }
+        items.forEach { item ->
+            scope.launch {
+                val result = apiCall("Não foi possível atualizar a previsão.") { api.eta(item.id) }
+                if (result is ApiResult.Success) {
+                    updateItems { if (it.id == item.id) it.copy(eta = result.data.eta) else it }
+                }
+            }
         }
     }
 

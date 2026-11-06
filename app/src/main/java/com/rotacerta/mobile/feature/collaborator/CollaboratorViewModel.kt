@@ -36,6 +36,12 @@ data class CollaboratorUiState(
             val route = selected ?: return null
             val stop = route.stop ?: return null
             val bus = route.lastLocation ?: return null
+            // Preferência: previsão do backend pelo trajeto das ruas, com as paradas antes da sua.
+            val eta = route.eta
+            if (eta != null && eta.isLive && eta.distanceMeters != null) {
+                return BusProximity(eta.distanceMeters.toDouble(), eta.minutes)
+            }
+            // Sem ela (backend antigo ou rota sem trajeto): linha reta pela velocidade atual.
             val distance = Geo.distanceMeters(bus.latitude, bus.longitude, stop.latitude, stop.longitude)
             return BusProximity(distance, Geo.etaMinutes(distance, bus.speed))
         }

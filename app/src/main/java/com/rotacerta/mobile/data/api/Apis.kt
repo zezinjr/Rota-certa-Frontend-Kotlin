@@ -6,6 +6,7 @@ import com.rotacerta.mobile.data.dto.AuthSessionResponse
 import com.rotacerta.mobile.data.dto.BoardingStatusRequest
 import com.rotacerta.mobile.data.dto.CepDto
 import com.rotacerta.mobile.data.dto.ChangePasswordRequest
+import com.rotacerta.mobile.data.dto.CollaboratorEtaResponseDto
 import com.rotacerta.mobile.data.dto.CollaboratorRouteDto
 import com.rotacerta.mobile.data.dto.DriverRouteDto
 import com.rotacerta.mobile.data.dto.LocationUpdateRequest
@@ -97,6 +98,10 @@ interface CollaboratorApi {
         @Path("id") routePassengerId: Long,
         @Body body: BoardingStatusRequest,
     ): Response<CollaboratorRouteDto>
+
+    /** Previsão de chegada ao ponto pelo trajeto das ruas, recalculada a cada posição do ônibus. */
+    @GET("me/routes/{id}/eta/")
+    suspend fun eta(@Path("id") routePassengerId: Long): Response<CollaboratorEtaResponseDto>
 }
 
 /** Endereço residencial do próprio usuário (validado no backend antes de gravar). */
